@@ -1,4 +1,4 @@
 {{ define "main" }}
-<p class="intro">All articles, from newest to oldest.</p>
+<p class="intro">A place to THINK, LEARN, and WRITE.</p>
 {{ partial "article-list.html" (where site.RegularPages "Section" "in" (slice "blog" "notes")) }}
 {{ end }}
