@@ -2,6 +2,7 @@
 title: "我的第一篇技术文章"
 date: 2026-10-21
 draft: true
+categories: ["Causal Inference"]
 description: "用一句话介绍这篇文章。"
 ---
 这里写你的开头。发布前，把上面的 `draft: true` 改成 `draft: false`。

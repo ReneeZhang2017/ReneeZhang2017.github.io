@@ -28,6 +28,7 @@ title: "如何评估倾向得分模型"
 date: 2026-10-21
 draft: false
 description: "从 overlap、balance 和 extreme weights 三方面检查。"
+categories: ["Causal Inference"]
 ---
 
 这里写开头。
@@ -100,3 +101,23 @@ Hugo 免费；GitHub Pages 对免费账号的公开仓库可用，受其使用�
 参考：
 - https://gohugo.io/host-and-deploy/deploy-to-github-pages/
 - https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
+
+## 顶部导航与文章分类
+
+- **ALL blogs**：汇总 `content/blog/` 和 `content/notes/` 中的已发布文章，按日期从新到旧显示。
+- **Causal Inference**、**Model**、**Statistics**：按照文章开头的 `categories` 自动筛选。
+
+例如，在文章最上方两条 `---` 之间加一行：
+
+```yaml
+categories: ["Causal Inference"]
+```
+
+分类名称请保持为 `Causal Inference`、`Model` 或 `Statistics`。
+文章可以同时属于多个分类：
+
+```yaml
+categories: ["Causal Inference", "Statistics"]
+```
+
+未设置分类的文章仍显示在 ALL blogs。个人介绍与项目说明不计入文章列表，原链接保留。

@@ -1,4 +1,5 @@
 {{ define "main" }}
+{{ if eq .Kind "term" }}<h1 class="category-title">{{ .Title }}</h1>{{ end }}
 {{ with .Content }}<div class="intro">{{ . }}</div>{{ end }}
 {{ partial "article-list.html" .RegularPages }}
 {{ end }}

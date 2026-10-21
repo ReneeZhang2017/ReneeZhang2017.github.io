@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="{{ site.Language.Locale }}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{ if .IsHome }}Blog{{ else }}{{ .Title }}{{ end }} · {{ site.Title }}</title>
+<title>{{ if .IsHome }}ALL blogs{{ else }}{{ .Title }}{{ end }} · {{ site.Title }}</title>
 <meta name="description" content="{{ .Description | default .Summary | default site.Params.description | plainify }}">
 <link rel="canonical" href="{{ .Permalink }}">
 <link rel="stylesheet" href="{{ "css/main.css" | relURL }}">
@@ -10,9 +10,11 @@
 </head><body>
 <a class="skip" href="#main">Skip to content</a>
 <header><a class="brand" href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a><nav aria-label="Main navigation">
-{{ $section := .Section }}
-<a href="{{ site.Home.RelPermalink }}" {{ if or .IsHome (eq $section "blog") }}aria-current="page"{{ end }}>Blog</a>
-{{ range slice "notes" "projects" "about" }}{{ with site.GetPage . }}<a href="{{ .RelPermalink }}" {{ if eq $.RelPermalink .RelPermalink }}aria-current="page"{{ else if and (eq .Section "notes") (eq $section "notes") }}aria-current="page"{{ end }}>{{ .Title }}</a>{{ end }}{{ end }}
+<a href="{{ site.Home.RelPermalink }}" {{ if .IsHome }}aria-current="page"{{ end }}>ALL blogs</a>
+{{ range slice "causal-inference" "model" "statistics" }}
+{{ with site.GetPage (printf "/categories/%s" .) }}
+<a href="{{ .RelPermalink }}" {{ if or (eq $.RelPermalink .RelPermalink) (in ($.Params.categories | default slice) .Title) }}aria-current="page"{{ end }}>{{ .Title }}</a>
+{{ end }}{{ end }}
 <button class="theme" aria-label="Switch to dark mode" title="Switch color theme">☾</button></nav></header>
 <main id="main">{{ block "main" . }}{{ end }}</main>
 <footer><span>© {{ now.Year }} {{ site.Params.author }}</span><span>A place to think, learn, and write.</span></footer>

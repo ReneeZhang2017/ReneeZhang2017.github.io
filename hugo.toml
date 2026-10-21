@@ -19,3 +19,6 @@ summaryLength = 30
   section = ['HTML', 'RSS']
 [caches.images]
   dir = ':cacheDir/images'
+
+[taxonomies]
+  category = "categories"
