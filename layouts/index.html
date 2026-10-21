@@ -1,0 +1,4 @@
+{{ define "main" }}
+<p class="intro">{{ site.Params.description }}</p>
+{{ partial "article-list.html" (where site.RegularPages "Section" "blog") }}
+{{ end }}

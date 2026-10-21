@@ -1,0 +1,21 @@
+baseURL = 'https://reneezhang2017.github.io/'
+locale = 'en-US'
+title = 'Renee Zhang'
+timeZone = 'America/Los_Angeles'
+enableRobotsTXT = true
+summaryLength = 30
+[params]
+  description = 'Notes on data science, experiments, and learning.'
+  author = 'Renee Zhang'
+[markup]
+  [markup.highlight]
+    noClasses = true
+    style = 'friendly'
+    tabWidth = 4
+  [markup.goldmark.renderer]
+    unsafe = false
+[outputs]
+  home = ['HTML', 'RSS']
+  section = ['HTML', 'RSS']
+[caches.images]
+  dir = ':cacheDir/images'

@@ -1,0 +1,4 @@
+{{ define "main" }}
+{{ with .Content }}<div class="intro">{{ . }}</div>{{ end }}
+{{ partial "article-list.html" .RegularPages }}
+{{ end }}

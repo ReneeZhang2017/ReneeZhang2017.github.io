@@ -1,0 +1,4 @@
+{{ range .GroupByDate "2006" }}
+<section class="group"><h2 class="year">{{ .Key }}</h2><ul class="article-list">
+{{ range .Pages }}<li class="entry"><a href="{{ .RelPermalink }}">{{ .Title }}{{ if .Draft }} <span class="draft">DRAFT</span>{{ end }}</a><time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time></li>{{ end }}
+</ul></section>{{ else }}<p class="empty">Nothing here yet. More soon.</p>{{ end }}

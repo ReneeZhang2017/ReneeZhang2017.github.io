@@ -1,0 +1,6 @@
+{{ define "main" }}<article>
+{{ if in (slice "blog" "notes") .Section }}<a class="back" href="{{ if eq .Section "blog" }}{{ site.Home.RelPermalink }}{{ else }}{{ .Parent.RelPermalink }}{{ end }}">← All {{ if eq .Section "blog" }}posts{{ else }}notes{{ end }}</a>{{ end }}
+<h1>{{ .Title }}</h1>
+{{ if in (slice "blog" "notes") .Section }}<div class="article-meta"><span>{{ site.Params.author }} · <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time></span>{{ if .Draft }}<span class="draft">DRAFT</span>{{ end }}</div>{{ end }}
+{{ .Content }}
+</article>{{ end }}
