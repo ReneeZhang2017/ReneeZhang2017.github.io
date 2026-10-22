@@ -1,5 +1,5 @@
 ---
-title: "优惠券真的增加消费了吗？一个完整的 DRE / AIPW 项目"
+title: "Do Coupons Increase Customer Spending? A Practical Guide to Doubly Robust Estimation"
 date: 2026-10-21
 draft: false
 categories: ["Causal Inference"]
