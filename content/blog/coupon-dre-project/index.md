@@ -10,7 +10,7 @@ description: "A step-by-step causal inference project using simulated coupon dat
 
 ### Jump to a step
 
-1. [Define the causal question and assumptions](#1-define-the-causal-question-and-assumptions)
+1. [Business Context](#1-Business-Context)
 2. [Generate the simulated data](#2-generate-the-simulated-data)
 3. [Check the data and the raw spending difference](#3-check-the-data-and-the-raw-spending-difference)
 4. [Train the models with cross-fitting](#4-train-the-models-with-cross-fitting)
@@ -31,11 +31,8 @@ I use a simulated dataset of 10,000 users containing historical spending, pre-tr
 
 ## 2. Generate the simulated data
 
-**Goal:** create a setting where the true treatment effect is known, so we can compare estimates with the truth.
-
 Historical spending and engagement both increase the chance of receiving a coupon and the amount a user would spend. Engagement also changes the coupon's effect: `true_effect = 10 + 2 * activity`.
 
-The population ATE is 20 because engagement is drawn uniformly from the integers 0 through 10. The mean true effect in one random sample can differ slightly from that population value.
 
 ### Code
 
