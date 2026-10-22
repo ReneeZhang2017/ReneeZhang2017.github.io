@@ -6,23 +6,12 @@ categories: ["Causal Inference"]
 description: "A step-by-step causal inference project using simulated coupon data to estimate treatment effects with doubly robust estimation."
 ---
 
-> **Project type: Simulation-based learning project.** This project uses simulated data for 10,000 users to estimate the average effect of issuing coupons on subsequent customer spending. All results are based on simulated data and do not represent actual business outcomes at any company.
+> **Project type: Simulation-based learning project.** In this case study, I walk through a simplified causal inference project to demonstrate how doubly robust estimation can estimate the average effect of issuing coupons on customer spending. All results are based on simulated data and do not represent actual business outcomes at any company.
 
-In this case study, I walk through a simplified causal inference project to demonstrate how doubly robust estimation can estimate the average effect of issuing coupons on customer spending.
+Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. The goal is to estimate the increase in customer spending caused by issuing coupons.
 
-Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. Because these characteristics also influence subsequent spending, directly comparing coupon recipients with non-recipients could produce a biased estimate. Ideally, the platform would have run a randomized A/B test; here, I focus on estimating the effect using observational data.
+I use a simulated dataset of 10,000 users containing historical spending, pre-treatment engagement, coupon assignment, and subsequent spending. 
 
-I use a simulated dataset of 10,000 users containing historical spending, pre-treatment engagement, coupon assignment, and subsequent spending. The analysis combines propensity score and outcome models, with cross-fitting and diagnostics to assess overlap, covariate balance, and model performance.
-
-**How to follow along:** each numbered step contains the question, executable Python code, actual output, and an interpretation. Run the code blocks in order in one Python session. The page shows saved results; it does not execute Python in your browser.
-
-[Download the complete notebook with outputs](Coupon_DRE_Complete_Project.ipynb) · [Download the Python script](coupon_dre_project.py) · [Dependencies](requirements.txt)
-
-Install the dependencies before running the Python cells:
-
-```bash
-pip install numpy pandas scikit-learn matplotlib jupyter
-```
 
 ### Jump to a step
 
