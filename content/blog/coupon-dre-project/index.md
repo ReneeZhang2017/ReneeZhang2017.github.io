@@ -6,7 +6,7 @@ categories: ["Causal Inference"]
 description: "A step-by-step causal inference project using simulated coupon data to estimate treatment effects with doubly robust estimation."
 ---
 
-> **项目类型：模拟数据学习项目。** 本文使用 10,000 位模拟用户，研究优惠券对后续消费的平均影响。所有结果来自模拟，不代表任何公司的真实业务效果。
+> **Project type: Simulation-based learning project. This project uses simulated data for 10,000 users to estimate the average effect of issuing coupons on subsequent customer spending. All results are based on simulated data and do not represent actual business outcomes at any company.
 
 [下载完整 Python Notebook](Coupon_DRE_Complete_Project.ipynb) · [依赖列表](requirements.txt)
 
