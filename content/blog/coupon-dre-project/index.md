@@ -3,7 +3,7 @@ title: "Do Coupons Increase Customer Spending? A Practical Guide to Doubly Robus
 date: 2026-10-21
 draft: false
 categories: ["Causal Inference"]
-description: "从选择偏差到双重稳健估计：用模拟优惠券数据完成 cross-fitting、模型诊断、ATE 估计与失败场景分析。"
+description: "A step-by-step causal inference project using simulated coupon data to estimate treatment effects with doubly robust estimation."
 ---
 
 > **项目类型：模拟数据学习项目。** 本文使用 10,000 位模拟用户，研究优惠券对后续消费的平均影响。所有结果来自模拟，不代表任何公司的真实业务效果。
