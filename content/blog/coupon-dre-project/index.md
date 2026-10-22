@@ -8,7 +8,7 @@ description: "A step-by-step causal inference project using simulated coupon dat
 
 > **Project type: Simulation-based learning project. This project uses simulated data for 10,000 users to estimate the average effect of issuing coupons on subsequent customer spending. All results are based on simulated data and do not represent actual business outcomes at any company.
 
-[下载完整 Python Notebook](Coupon_DRE_Complete_Project.ipynb) · [依赖列表](requirements.txt)
+
 
 ## 1. 问题：收到优惠券的人消费更高，能说明券有效吗？
 
