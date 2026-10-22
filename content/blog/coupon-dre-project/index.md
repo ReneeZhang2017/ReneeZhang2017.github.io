@@ -8,11 +8,6 @@ description: "A step-by-step causal inference project using simulated coupon dat
 
 > **Project type: Simulation-based learning project.** In this case study, I walk through a simplified causal inference project to demonstrate how doubly robust estimation can estimate the average effect of issuing coupons on customer spending. All results are based on simulated data and do not represent actual business outcomes at any company.
 
-Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. The goal is to estimate the increase in customer spending caused by issuing coupons.
-
-I use a simulated dataset of 10,000 users containing historical spending, pre-treatment engagement, coupon assignment, and subsequent spending. 
-
-
 ### Jump to a step
 
 1. [Define the causal question and assumptions](#1-define-the-causal-question-and-assumptions)
@@ -28,27 +23,11 @@ I use a simulated dataset of 10,000 users containing historical spending, pre-tr
 11. [Stress-test poor overlap](#11-stress-test-poor-overlap)
 12. [Summarize the diagnostics](#12-summarize-the-diagnostics)
 
-## 1. Define the causal question and assumptions
+## 1. Business Context
+Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. The goal is to estimate the increase in customer spending caused by issuing coupons.
 
-**Question:** what would happen to average subsequent spending if all users in the target population were issued a coupon, compared with none being issued a coupon?
+I use a simulated dataset of 10,000 users containing historical spending, pre-treatment engagement, coupon assignment, and subsequent spending. 
 
-The estimand is the population average treatment effect, `ATE = E[Y(1) - Y(0)]`. Treatment means **issuing** a coupon, not redeeming one. Spending is measured in arbitrary monetary units; this simulation does not specify a real currency or observation window.
-
-| Variable | Meaning | Timing |
-|---|---|---|
-| `past_spend` | Historical spending | Before coupon assignment |
-| `activity` | Historical engagement | Before coupon assignment |
-| `treatment` | Coupon issued: 1; no coupon: 0 | Assignment |
-| `outcome` | Subsequent spending | After assignment |
-
-Causal interpretation requires:
-
-- **Conditional exchangeability:** after adjusting for historical spending and engagement, there are no remaining common causes of coupon assignment and spending. The simulation ensures this; real data require domain knowledge and additional assessment.
-- **Positivity / overlap:** users with the relevant backgrounds have a nonzero probability of either treatment state.
-- **Consistency and no interference:** the treatment is well-defined, and one user's coupon does not change another user's outcome.
-- **Appropriate sampling and timing:** users are independent units here, and all adjustment variables are measured before treatment.
-
-A high prediction score cannot establish these assumptions. This project uses propensity scores for weighting and AIPW, rather than propensity score matching (PSM).
 
 ## 2. Generate the simulated data
 
