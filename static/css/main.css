@@ -7,3 +7,6 @@ nav{gap:20px;font-size:14px;flex-wrap:wrap}.category-title{font-size:23px;margin
 /* Compact notebook outputs in the coupon project's data-generation section. */
 article h2[id="2-generate-the-simulated-data"] ~ table:not(h2[id="3-check-the-data-and-the-raw-spending-difference"] ~ table){width:max-content;max-width:100%;font-size:12px;line-height:1.4;font-variant-numeric:tabular-nums}
 article h2[id="2-generate-the-simulated-data"] ~ table:not(h2[id="3-check-the-data-and-the-raw-spending-difference"] ~ table) th,article h2[id="2-generate-the-simulated-data"] ~ table:not(h2[id="3-check-the-data-and-the-raw-spending-difference"] ~ table) td{padding:4px 8px}
+
+/* Separate consecutive output tables. */
+article table + table{margin-top:24px}
