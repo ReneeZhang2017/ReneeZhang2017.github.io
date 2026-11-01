@@ -129,9 +129,9 @@ display(df.describe())
 
 ## 3. True ATE Vs. Naive_difference
 
-Because this dataset is simulated, we know the true average effect of receiving a coupon. This gives us a benchmark for evaluating how accurately different methods estimate the causal effect.
+Because this dataset is simulated, we know each customer’s true coupon effect. We can therefore calculate two benchmarks: the true ATE, which averages these effects across all 10,000 customers, and the true ATT, which averages them only among customers who actually received a coupon.
 
-Let's compare this benchmark with the naive difference: the average spending of customers who received a coupon minus that of customers who did not.
+I compare both benchmarks with the naive difference: the difference in average observed spending between coupon recipients and non-recipients. This comparison illustrates why the target population matters and why a simple comparison between the two groups may not recover the causal effect.
 
 ### Code
 
