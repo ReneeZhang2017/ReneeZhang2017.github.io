@@ -140,23 +140,25 @@ true_att = true_effect[received_coupon].mean()
 group_mean = df.groupby('coupon_assignment')['subsequent_spending'].mean()
 naive_difference = group_mean.loc[1] - group_mean.loc[0]
 
-display(
-    f"True ATE: {true_ate:.2f}. "
-    "The average difference in spending if all 10,000 customers received "
-    "a coupon versus if none of those same customers received a coupon."
-)
+# Summarize the three comparisons in a DataFrame
+comparison = pd.DataFrame({
+    'Metric': ['True ATE', 'True ATT', 'Naive Difference'],
+    'Value': [true_ate, true_att, naive_difference],
+    'Interpretation': [
+        'Average causal effect across all 10,000 customers: '
+        'spending if everyone received a coupon versus if no one did.',
+
+        'Average causal effect among actual coupon recipients: '
+        'their spending with a coupon versus without one.',
+
+        'Difference in average observed spending between '
+        'coupon recipients and non-recipients.'
+    ]
+})
 
 display(
-    f"True ATT: {true_att:.2f}. "
-    "The average difference in spending for the customers who actually "
-    "received a coupon, compared with what those same customers "
-    "would have spent without a coupon."
-)
-
-display(
-    f"Naive Difference: {naive_difference:.2f}. "
-    "The difference in average observed spending between customers "
-    "who received a coupon and those who did not."
+    comparison.style
+    .format({'Value': '{:.2f}'})
 )
 
 # Compare pre-treatment characteristics and subsequent spending by group
@@ -167,13 +169,11 @@ display(
 
 ### Output
 
-```text
-'True ATE: 20.07. The average difference in spending if all 10,000 customers received a coupon versus if none of those same customers received a coupon.'
-
-'True ATT: 21.79. The average difference in spending for the customers who actually received a coupon, compared with what those same customers would have spent without a coupon.'
-
-'Naive Difference: 45.19. The difference in average observed spending between customers who received a coupon and those who did not.'
-```
+| | Metric | Value | Interpretation |
+|---|---|---:|---|
+| 0 | True ATE | 20.07 | Average causal effect across all 10,000 customers: spending if everyone received a coupon versus if no one did. |
+| 1 | True ATT | 21.79 | Average causal effect among actual coupon recipients: their spending with a coupon versus without one. |
+| 2 | Naive Difference | 45.19 | Difference in average observed spending between coupon recipients and non-recipients. |
 
 | coupon_assignment | past_spend | activity | subsequent_spending |
 |---|---:|---:|---:|
