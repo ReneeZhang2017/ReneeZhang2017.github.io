@@ -207,3 +207,207 @@ I first estimate each customer’s probability of receiving a coupon using histo
 
 The initial target is ATT: the average coupon effect among actual coupon recipients. However, if some recipients cannot be matched, the estimate applies to the recipients retained in the matched sample.
 
+### 4.1 Estimate propensity scores
+
+I use logistic regression to estimate the probability of receiving a coupon from historical spending and pre-treatment engagement. Subsequent spending is not used to fit the model or choose matches. The estimated scores are used for matching; the simulation's `true_ps` is not used.
+
+```python
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+# 1. Estimate coupon probabilities using pre-treatment variables only
+psm_data = df.copy()
+features = ['past_spend', 'activity']
+ps_model = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(max_iter=1000, random_state=42)
+)
+ps_model.fit(psm_data[features], psm_data['coupon_assignment'])
+psm_data['propensity_score'] = ps_model.predict_proba(psm_data[features])[:, 1]
+```
+
+### 4.2 Check overlap
+
+Before matching, I count coupon recipients and non-recipients in five propensity score ranges. This is a coarse support diagnostic, not proof that every customer has a comparable counterpart.
+
+```python
+# Count recipients and non-recipients in each propensity score range
+score_bins = pd.cut(
+    psm_data['propensity_score'],
+    bins=np.linspace(0, 1, 6),
+    include_lowest=True
+)
+overlap = pd.crosstab(
+    score_bins,
+    psm_data['coupon_assignment']
+)
+display(overlap)
+```
+
+#### Output
+
+| propensity_score | coupon_assignment = 0 | coupon_assignment = 1 |
+|---|---:|---:|
+| (-0.001, 0.2] | 475 | 102 |
+| (0.2, 0.4] | 1827 | 827 |
+| (0.4, 0.6] | 1824 | 1777 |
+| (0.6, 0.8] | 832 | 1808 |
+| (0.8, 1.0] | 58 | 470 |
+
+**Interpretation.** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
+
+### 4.3 Perform 1:1 matching
+
+For each coupon recipient, I select the nearest available non-recipient on the **logit propensity score** scale. I use a caliper of **0.2 standard deviations of the estimated logit scores**, approximately **0.1693** in this run. This limits the permitted distance; it is an illustrative matching choice rather than a universal optimal setting.
+
+Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Recipients without an available control within the caliper remain unmatched. Matching order, caliper, and replacement choices can change the retained sample.
+
+```python
+# The decision function gives the logit of the estimated probability
+psm_data['ps_logit'] = ps_model.decision_function(psm_data[features])
+caliper = 0.2 * psm_data['ps_logit'].std(ddof=1)
+
+# 2. Match each recipient to the nearest available non-recipient
+# Use a fixed random order; each control is used at most once
+recipients = psm_data.loc[psm_data.coupon_assignment == 1]
+non_recipients = psm_data.loc[psm_data.coupon_assignment == 0]
+available_controls = non_recipients.index.tolist()
+pairs = []
+
+for recipient_id in recipients.sample(frac=1, random_state=42).index:
+    if not available_controls:
+        break
+    distances = (
+        psm_data.loc[available_controls, 'ps_logit']
+        - psm_data.loc[recipient_id, 'ps_logit']
+    ).abs()
+    control_id = distances.idxmin()
+    if distances.loc[control_id] <= caliper:
+        pairs.append((recipient_id, control_id))
+        available_controls.remove(control_id)
+
+pairs = pd.DataFrame(pairs, columns=['recipient_id', 'control_id'])
+if pairs.empty:
+    raise ValueError('No matches found. Review overlap and matching settings.')
+
+matched_recipients = psm_data.loc[pairs.recipient_id]
+matched_controls = psm_data.loc[pairs.control_id]
+
+# 3. Check retention and balance before looking at the outcome difference
+retention = pd.DataFrame({
+    'Group': ['Coupon recipients', 'Non-recipients'],
+    'Original': [len(recipients), len(non_recipients)],
+    'Matched': [len(pairs), len(pairs)]
+})
+retention['Unmatched'] = retention['Original'] - retention['Matched']
+display(retention)
+```
+
+#### Output
+
+| | Group | Original | Matched | Unmatched |
+|---|---|---:|---:|---:|
+| 0 | Coupon recipients | 4984 | 3500 | 1484 |
+| 1 | Non-recipients | 5016 | 3500 | 1516 |
+
+**Interpretation.** The procedure retains **3,500 pairs**, including approximately **70.2% of the original coupon recipients**. It excludes **1,484 recipients**. An unmatched recipient does not necessarily have no similar non-recipient in the original data; a suitable control may already have been used.
+
+Because some recipients are excluded, the estimate now targets the recipients retained in the matched sample. It should not automatically be generalized to all coupon recipients or all 10,000 customers.
+
+### 4.4 Check covariate balance
+
+Matching must be evaluated using the covariates themselves, not just similarity in propensity scores. Here I compare matched means and standardized mean differences (SMDs) for `past_spend` and `activity`.
+
+For each variable, I use the original pooled standard deviation as a fixed denominator for both the before- and after-matching SMDs. Values closer to zero indicate closer means.
+
+```python
+balance_rows = []
+for feature in features:
+    # Keep the original pooled SD fixed for before/after comparisons
+    pooled_sd = np.sqrt(
+        (recipients[feature].var(ddof=1)
+         + non_recipients[feature].var(ddof=1)) / 2
+    )
+    balance_rows.append({
+        'Feature': feature,
+        'Recipient mean (matched)': matched_recipients[feature].mean(),
+        'Control mean (matched)': matched_controls[feature].mean(),
+        'SMD before': (
+            recipients[feature].mean() - non_recipients[feature].mean()
+        ) / pooled_sd,
+        'SMD after': (
+            matched_recipients[feature].mean()
+            - matched_controls[feature].mean()
+        ) / pooled_sd
+    })
+balance = pd.DataFrame(balance_rows)
+display(balance.round(3))
+```
+
+#### Output
+
+| | Feature | Recipient mean (matched) | Control mean (matched) | SMD before | SMD after |
+|---|---|---:|---:|---:|---:|
+| 0 | past_spend | 99.626 | 98.840 | 0.524 | 0.014 |
+| 1 | activity | 5.025 | 5.029 | 0.565 | -0.001 |
+
+**Interpretation.** The absolute SMDs fall from approximately **0.524 to 0.014** for historical spending and **0.565 to 0.001** for engagement. These observed means are much closer after matching.
+
+This table checks mean balance only. A more complete assessment would also inspect distributions, variances, and relevant nonlinear terms or interactions. A small SMD is not proof that all confounding has been removed. If covariate balance remains poor, the matching design should be revised before interpreting the outcome comparison.
+
+### 4.5 Estimate the effect and compare the appropriate benchmark
+
+For each matched pair, I subtract the non-recipient's spending from the recipient's spending, then average the differences. I convert the outcome columns to arrays so pandas does not align the different customer IDs.
+
+Because this is simulated data, I can also calculate the true average coupon effect for the **same retained recipients**. True effects are used only for evaluation, never for deciding the matching rules or choosing pairs.
+
+```python
+# 4. Estimate the average effect among retained recipients
+# Use arrays so pandas does not align different customer IDs
+psm_effect = (
+    matched_recipients['subsequent_spending'].to_numpy()
+    - matched_controls['subsequent_spending'].to_numpy()
+).mean()
+
+# Simulation benchmark only: never use true effects to choose matches
+true_effect_by_customer = pd.Series(true_effect, index=df.index)
+matched_true_effect = true_effect_by_customer.loc[pairs.recipient_id].mean()
+
+psm_comparison = pd.DataFrame({
+    'Metric': [
+        'Naive Difference',
+        'True ATT: all coupon recipients',
+        'True effect: matched coupon recipients',
+        'PSM estimate: matched coupon recipients'
+    ],
+    'Value': [
+        naive_difference,
+        true_effect_by_customer.loc[recipients.index].mean(),
+        matched_true_effect,
+        psm_effect
+    ]
+})
+display(psm_comparison.round(2))
+```
+
+#### Output
+
+| | Metric | Value |
+|---|---|---:|
+| 0 | Naive Difference | 45.19 |
+| 1 | True ATT: all coupon recipients | 21.79 |
+| 2 | True effect: matched coupon recipients | 20.05 |
+| 3 | PSM estimate: matched coupon recipients | 20.84 |
+
+**Interpretation.** PSM estimates an average spending increase of approximately **$20.84 among matched coupon recipients**. The corresponding true average effect is **$20.05**. Matching substantially reduces the discrepancy seen in the original naive difference of **$45.19**, but the point estimate still differs from its simulation benchmark by approximately **$0.79**.
+
+The true ATT for all original coupon recipients is **$21.79**. Its difference from the matched recipients' true effect reflects a change in the target population. Therefore, the PSM estimate should be compared with **$20.05**, not treated as an estimate of the full-population ATE or automatically as an estimate of ATT for every original recipient.
+
+This section reports a point estimate and descriptive diagnostics, not a confidence interval. A causal interpretation requires sufficient overlap for the retained population, consistency and no interference, and no unmeasured confounding given the selected pre-treatment variables. These conditions follow from the way this simulation was constructed; in a real study, they would require substantive justification.
+
+### References for matching and diagnostics
+
+- [MatchIt: Assessing Balance](https://kosukeimai.github.io/MatchIt/articles/assessing-balance.html)
+- [MatchIt: Matching Methods](https://kosukeimai.github.io/MatchIt/articles/matching-methods.html)
+- [MatchIt: Matching for Causal Inference](https://kosukeimai.github.io/MatchIt/reference/matchit.html)
