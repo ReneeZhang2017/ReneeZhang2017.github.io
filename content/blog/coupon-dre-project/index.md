@@ -156,9 +156,9 @@ display(
     "who received a coupon and those who did not."
 )
 
-# Compare the two groups before coupon assignment
+# Compare pre-treatment characteristics and subsequent spending by group
 display(
-    df.groupby('coupon_assignment')[['past_spend', 'activity']].mean()
+    df.groupby('coupon_assignment')[['past_spend', 'activity', 'subsequent_spending']].mean()
 )
 ```
 
@@ -170,10 +170,10 @@ display(
 'Naive Difference: 45.19. The difference in average observed spending between customers who received a coupon and those who did not.'
 ```
 
-| coupon_assignment | past_spend | activity |
-|---|---:|---:|
-| 0 | 84.869642 | 4.178030 |
-| 1 | 114.072446 | 5.892657 |
+| coupon_assignment | past_spend | activity | subsequent_spending |
+|---|---:|---:|---:|
+| 0 | 84.869642 | 4.178030 | 83.325577 |
+| 1 | 114.072446 | 5.892657 | 128.515383 |
 
 **Interpretation.** 
 The true ATE is the average causal effect we aim to estimate. In real-world data, however, we cannot observe the same customer’s spending both with and without a coupon under otherwise identical conditions. In this simulation, we know the true effect because we specified how the data were generated.
