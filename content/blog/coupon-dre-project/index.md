@@ -175,7 +175,14 @@ display(
 | 0 | 84.869642 | 4.178030 |
 | 1 | 114.072446 | 5.892657 |
 
-**Interpretation.** Coupon recipients have higher historical spending (**114.072 versus 84.870**) and engagement (**5.893 versus 4.178**). Their subsequent spending is higher by about **45.190** units. Since the known effect is around 20, that raw comparison substantially overstates the coupon effect in this simulation. It mixes treatment with pre-existing differences.
+**Interpretation.** 
+The true ATE is the average causal effect we aim to estimate. In real-world data, however, we cannot observe the same customer’s spending both with and without a coupon under otherwise identical conditions. In this simulation, we know the true effect because we specified how the data were generated.
+
+If we simply group customers by coupon assignment and compare their average spending, we might conclude that coupons increase spending by approximately $45 per customer ($128.52 − $83.33), rather than the true average effect of approximately $20.
+
+Why does the naive difference differ from the true ATE? Customers who received coupons are systematically different from those who did not. They already had higher historical spending and engagement, both of which also increase subsequent spending.
+
+This creates selection bias: customers who would tend to spend more even without a coupon are more likely to receive one. As a result, the naive difference combines the coupon’s causal effect with pre-existing differences between the two groups.
 
 ## 4. Train the models with cross-fitting
 
