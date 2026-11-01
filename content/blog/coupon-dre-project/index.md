@@ -12,7 +12,7 @@ description: "A step-by-step causal inference project using simulated coupon dat
 
 1. [Business Context](#1-Business-Context)
 2. [Generate the simulated data](#2-generate-the-simulated-data)
-3. [Check the data and the raw spending difference](#3-check-the-data-and-the-raw-spending-difference)
+3. [True ATE & Naive_difference](#3-True ATE & Naive_difference)
 4. [Train the models with cross-fitting](#4-train-the-models-with-cross-fitting)
 5. [Evaluate the propensity score model](#5-evaluate-the-propensity-score-model)
 6. [Check overlap](#6-check-overlap)
@@ -127,7 +127,7 @@ display(df.describe())
 
 
 
-## 3. Check the data and the raw spending difference
+## 3. True ATE & Naive_difference
 
 **Goal:** check basic data quality and see what a simple treated-versus-control comparison would report.
 
