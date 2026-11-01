@@ -36,13 +36,13 @@ I will use a simulated simple dataset of 10,000 users containing 4 variables:
 
 The DataFrame `df` is a simulated dataset of 10,000 customers. Each row represents one customer with four observed variables:
 
-1. **Historical spending (`past_spend`):** I randomly generate a value between 0 and 200 for each customer using a uniform distribution. This represents how much the customer spent before coupon assignment.
+1. **Historical spending:** I randomly generate a value between 0 and 200 for each customer using a uniform distribution. This represents how much the customer spent before coupon assignment.
 
-2. **Pre-treatment engagement (`activity`):** I randomly generate an integer from 0 to 10, inclusive, for each customer. Higher values represent greater engagement before coupon assignment.
+2. **Pre-treatment engagement:** I randomly generate an integer from 0 to 10, inclusive, for each customer. Higher values represent greater engagement before coupon assignment.
 
-3. **Coupon assignment (`coupon_assignment`):** I first calculate each customer's probability of receiving a coupon based on historical spending and engagement. Customers with higher spending and engagement have higher probabilities. I then use these probabilities to randomly assign coupons: `1` means the customer receives a coupon, and `0` means they do not. In this simulated sample, **4,984 customers (49.84%) receive a coupon**, while **5,016 (50.16%) do not**.
+3. **Coupon assignment:** I first calculate each customer's probability of receiving a coupon based on historical spending and engagement. Customers with higher spending and engagement have higher probabilities. I then use these probabilities to randomly assign coupons: `1` means the customer receives a coupon, and `0` means they do not. In this simulated sample, **4,984 customers (49.84%) receive a coupon**, while **5,016 (50.16%) do not**.
 
-4. **Subsequent spending (`subsequent_spending`):** I first calculate expected spending without a coupon as `20 + 0.5 * past_spend + 5 * activity`. For customers who receive a coupon, I add a coupon effect of `10 + 2 * activity`, so more engaged customers receive a larger spending lift. Finally, I add normally distributed random noise with a mean of 0 and a standard deviation of 10 to every customer's spending. The final formula is `outcome = baseline + coupon_assignment * true_effect + noise`.
+4. **Subsequent spending:** I first calculate expected spending without a coupon as `20 + 0.5 * past_spend + 5 * activity`. For customers who receive a coupon, I add a coupon effect of `10 + 2 * activity`, so more engaged customers receive a larger spending lift. Finally, I add normally distributed random noise with a mean of 0 and a standard deviation of 10 to every customer's spending. The final formula is `outcome = baseline + coupon_assignment * true_effect + noise`.
 
 ### Code
 
