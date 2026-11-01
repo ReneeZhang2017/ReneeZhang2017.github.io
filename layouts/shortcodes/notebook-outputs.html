@@ -1,0 +1,16 @@
+<style>
+.notebook-outputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;margin:18px 0}
+.notebook-output{min-width:0;overflow-x:auto}
+article .notebook-output>p:first-child{margin:0 0 10px}
+article .notebook-output table{width:max-content;max-width:100%;margin:0;font-size:11px;line-height:1.4;font-variant-numeric:tabular-nums}
+article .notebook-output td,article .notebook-output th{padding:4px 5px;white-space:nowrap}
+article .notebook-output p code{font-size:12px}
+@media(max-width:640px){.notebook-outputs{grid-template-columns:1fr;gap:20px}}
+</style>
+<div class="notebook-outputs">
+{{ range split .Inner "\n<!-- output-split -->\n" }}
+  <div class="notebook-output">
+    {{ $.Page.RenderString (dict "display" "block") . }}
+  </div>
+{{ end }}
+</div>
