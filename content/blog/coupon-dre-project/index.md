@@ -40,9 +40,9 @@ The DataFrame `df` is a simulated dataset of 10,000 customers. Each row represen
 
 2. **Pre-treatment engagement (`activity`):** I randomly generate an integer from 0 to 10, inclusive, for each customer. Higher values represent greater engagement before coupon assignment.
 
-3. **Coupon assignment (`treatment`):** I first calculate each customer's probability of receiving a coupon based on historical spending and engagement. Customers with higher spending and engagement have higher probabilities. I then use these probabilities to randomly assign coupons: `1` means the customer receives a coupon, and `0` means they do not. In this simulated sample, **4,984 customers (49.84%) receive a coupon**, while **5,016 (50.16%) do not**.
+3. **Coupon assignment (`coupon_assignment`):** I first calculate each customer's probability of receiving a coupon based on historical spending and engagement. Customers with higher spending and engagement have higher probabilities. I then use these probabilities to randomly assign coupons: `1` means the customer receives a coupon, and `0` means they do not. In this simulated sample, **4,984 customers (49.84%) receive a coupon**, while **5,016 (50.16%) do not**.
 
-4. **Subsequent spending (`outcome`):** I first calculate expected spending without a coupon as `20 + 0.5 * past_spend + 5 * activity`. For customers who receive a coupon, I add a coupon effect of `10 + 2 * activity`, so more engaged customers receive a larger spending lift. Finally, I add normally distributed random noise with a mean of 0 and a standard deviation of 10 to every customer's spending. The final formula is `outcome = baseline + treatment * true_effect + noise`.
+4. **Subsequent spending (`outcome`):** I first calculate expected spending without a coupon as `20 + 0.5 * past_spend + 5 * activity`. For customers who receive a coupon, I add a coupon effect of `10 + 2 * activity`, so more engaged customers receive a larger spending lift. Finally, I add normally distributed random noise with a mean of 0 and a standard deviation of 10 to every customer's spending. The final formula is `outcome = baseline + coupon_assignment * true_effect + noise`.
 
 ### Code
 
@@ -83,7 +83,7 @@ outcome = baseline + treatment * true_effect + noise
 df = pd.DataFrame({
     'past_spend': past_spend,
     'activity': activity,
-    'treatment': treatment,
+    'coupon_assignment': treatment,
     'outcome': outcome
 })
 
@@ -96,7 +96,7 @@ display(df.describe())
 {{< notebook-outputs >}}
 `display(df.head(10))`
 
-| | past_spend | activity | treatment | outcome |
+| | past_spend | activity | coupon_assignment | outcome |
 |---|---:|---:|---:|---:|
 | 0 | 154.791210 | 0 | 0 | 87.184820 |
 | 1 | 87.775688 | 7 | 1 | 116.847515 |
@@ -113,7 +113,7 @@ display(df.describe())
 
 `display(df.describe())`
 
-| | past_spend | activity | treatment | outcome |
+| | past_spend | activity | coupon_assignment | outcome |
 |---|---:|---:|---:|---:|
 | count | 10000.000000 | 10000.000000 | 10000.000000 | 10000.000000 |
 | mean | 99.424320 | 5.032600 | 0.498400 | 105.848177 |
@@ -156,11 +156,11 @@ Each row is one simulated user. Real data would also require checks for unique u
 
 ```python
 assert not df.isna().any().any()
-assert set(df['treatment'].unique()) == {0, 1}
+assert set(df['coupon_assignment'].unique()) == {0, 1}
 assert np.isfinite(df.to_numpy()).all()
-print(df.groupby('treatment').agg(n=('outcome', 'size'), past_spend=('past_spend', 'mean'),
+print(df.groupby('coupon_assignment').agg(n=('outcome', 'size'), past_spend=('past_spend', 'mean'),
       activity=('activity', 'mean'), outcome=('outcome', 'mean')).round(3))
-naive_difference = df.loc[df.treatment == 1, 'outcome'].mean() - df.loc[df.treatment == 0, 'outcome'].mean()
+naive_difference = df.loc[df.coupon_assignment == 1, 'outcome'].mean() - df.loc[df.coupon_assignment == 0, 'outcome'].mean()
 print('Naive difference:', round(naive_difference, 3))
 ```
 
@@ -168,7 +168,7 @@ print('Naive difference:', round(naive_difference, 3))
 
 ```text
               n  past_spend  activity  outcome
-treatment                                     
+coupon_assignment                                     
 0          5016      84.870     4.178   83.326
 1          4984     114.072     5.893  128.515
 Naive difference: 45.19
@@ -184,8 +184,8 @@ Naive difference: 45.19
 | Model | Training rows within each training fold | Prediction for every held-out user |
 |---|---|---|
 | Propensity model | All training users | `ps`: probability of receiving a coupon |
-| Outcome model 0 | Training users with `treatment = 0` | `mu0`: expected spending without a coupon |
-| Outcome model 1 | Training users with `treatment = 1` | `mu1`: expected spending with a coupon |
+| Outcome model 0 | Training users with `coupon_assignment = 0` | `mu0`: expected spending without a coupon |
+| Outcome model 1 | Training users with `coupon_assignment = 1` | `mu1`: expected spending with a coupon |
 
 I use a logistic regression pipeline for propensity scores and a separate linear regression for each outcome state. Five-fold cross-fitting trains on 80% of users and predicts for the remaining 20%, repeating until every user has one held-out prediction.
 
@@ -195,7 +195,7 @@ The two outcome models **predict** on the validation users; their predictions ar
 
 ```python
 def cross_fit(data, ps_cols, outcome_cols, seed=42):
-    T = data['treatment'].to_numpy()
+    T = data['coupon_assignment'].to_numpy()
     Y = data['outcome'].to_numpy()
     pred = {name: np.full(len(data), np.nan) for name in
             ['ps', 'mu0', 'mu1', 'base_ps', 'base0', 'base1']}
@@ -206,11 +206,11 @@ def cross_fit(data, ps_cols, outcome_cols, seed=42):
         valid = data.iloc[valid_idx]
         ps_model = Pipeline([('scaler', StandardScaler()),
                              ('model', LogisticRegression(max_iter=1000))])
-        ps_model.fit(train[ps_cols], train['treatment'])
+        ps_model.fit(train[ps_cols], train['coupon_assignment'])
         pred['ps'][valid_idx] = ps_model.predict_proba(valid[ps_cols])[:, 1]
-        pred['base_ps'][valid_idx] = train['treatment'].mean()
+        pred['base_ps'][valid_idx] = train['coupon_assignment'].mean()
         for state in [0, 1]:
-            group = train.loc[train['treatment'] == state]
+            group = train.loc[train['coupon_assignment'] == state]
             model = LinearRegression()
             model.fit(group[outcome_cols], group['outcome'])
             pred[f'mu{state}'][valid_idx] = model.predict(valid[outcome_cols])
@@ -224,7 +224,7 @@ features = ['past_spend', 'activity']
 pred = cross_fit(df, features, features)
 for name in ['ps', 'mu0', 'mu1']:
     df[name] = pred[name]
-print(df[['treatment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
+print(df[['coupon_assignment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
 ```
 
 ### Output
@@ -252,7 +252,7 @@ AUC measures discrimination. Brier score and log loss assess probability predict
 ### Code
 
 ```python
-T = df['treatment'].to_numpy()
+T = df['coupon_assignment'].to_numpy()
 Y = df['outcome'].to_numpy()
 ps = df['ps'].to_numpy()
 ps_metrics = pd.DataFrame([
@@ -316,7 +316,7 @@ print('Counts by PS bin:\n', overlap_counts)
 print('Share with PS outside [0.05, 0.95]:', round(np.mean((ps < .05) | (ps > .95)), 4))
 spend_bin = pd.cut(df.past_spend, bins=[0, 50, 100, 150, 200], include_lowest=True)
 activity_bin = pd.cut(df.activity, bins=[-1, 3, 7, 10])
-support_grid = pd.crosstab([spend_bin, activity_bin], df.treatment).reindex(columns=[0, 1], fill_value=0)
+support_grid = pd.crosstab([spend_bin, activity_bin], df.coupon_assignment).reindex(columns=[0, 1], fill_value=0)
 print('Covariate grid counts (coarse diagnostic only):\n', support_grid)
 plt.figure(figsize=(7, 4))
 for state, label in [(0, 'No coupon'), (1, 'Coupon')]:
@@ -448,7 +448,7 @@ The checked terms become more balanced after weighting: the maximum absolute SMD
 
 **Goal:** check held-out prediction errors in the treatment state we actually observe.
 
-For users with `treatment = 0`, compare `mu0` with actual spending. For users with `treatment = 1`, compare `mu1` with actual spending. Compare each model against its training-group mean baseline, then inspect residuals across feature ranges.
+For users with `coupon_assignment = 0`, compare `mu0` with actual spending. For users with `coupon_assignment = 1`, compare `mu1` with actual spending. Compare each model against its training-group mean baseline, then inspect residuals across feature ranges.
 
 MAE is the mean absolute prediction error. RMSE gives larger errors more weight. Residuals are `actual - predicted`.
 
@@ -467,12 +467,12 @@ for state in [0, 1]:
 outcome_metrics = pd.DataFrame(outcome_rows)
 print(outcome_metrics.round(3))
 factual_prediction = np.where(T == 1, pred['mu1'], pred['mu0'])
-residuals = df[['treatment', 'past_spend', 'activity']].copy()
+residuals = df[['coupon_assignment', 'past_spend', 'activity']].copy()
 residuals['residual'] = Y - factual_prediction
 for col in features:
     residuals['bin'] = pd.qcut(residuals[col], 4, duplicates='drop')
     print('Residuals by', col)
-    print(residuals.groupby(['treatment', 'bin'], observed=True).agg(
+    print(residuals.groupby(['coupon_assignment', 'bin'], observed=True).agg(
         n=('residual', 'size'), mean_residual=('residual', 'mean'),
         residual_sd=('residual', 'std')).round(3))
 fig, axes = plt.subplots(1, 2, figsize=(10, 4))
@@ -494,7 +494,7 @@ plt.tight_layout(); plt.show()
 3      1  Training-group mean baseline  4984  28.712  35.232         -0.000
 Residuals by past_spend
                                  n  mean_residual  residual_sd
-treatment bin                                                 
+coupon_assignment bin                                                 
 0         (0.0619, 49.208]    1668         -0.047       10.078
           (49.208, 99.66]     1393          0.273        9.952
           (99.66, 149.136]    1106         -0.096        9.951
@@ -505,7 +505,7 @@ treatment bin
           (149.136, 199.995]  1651          0.135       10.061
 Residuals by activity
                             n  mean_residual  residual_sd
-treatment bin                                            
+coupon_assignment bin                                            
 0         (-0.001, 2.0]  1790         -0.117        9.814
           (2.0, 5.0]     1524          0.271        9.845
           (5.0, 8.0]     1149         -0.288       10.145
@@ -654,7 +654,7 @@ stress = df[['past_spend', 'activity']].copy()
 stress_rng = np.random.default_rng(2026)
 stress_true_ps = 1/(1+np.exp(-0.15*(stress.past_spend.to_numpy()-100)))
 stress_t = stress_rng.binomial(1, stress_true_ps)
-stress['treatment'] = stress_t
+stress['coupon_assignment'] = stress_t
 stress['outcome'] = baseline + stress_t*true_effect + stress_rng.normal(0, 10, n)
 stress_pred = cross_fit(stress, features, features)
 stress_w = weights_from_ps(stress_t, stress_pred['ps'])
