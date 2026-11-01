@@ -230,7 +230,7 @@ print(df[['coupon_assignment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
 ### Output
 
 ```text
-   treatment  outcome     ps      mu0      mu1
+   coupon_assignment  outcome     ps      mu0      mu1
 0          0   87.185  0.391   97.504  107.908
 1          1  116.848  0.564   98.809  123.088
 2          1  135.199  0.530  115.895  130.228
@@ -341,7 +341,7 @@ row_0
 (0.8, 0.9]   58  479
 Share with PS outside [0.05, 0.95]: 0.0
 Covariate grid counts (coarse diagnostic only):
- treatment                  0    1
+ coupon_assignment                  0    1
 past_spend     activity          
 (-0.001, 50.0] (-1, 3]   733  187
                (3, 7]    580  313
