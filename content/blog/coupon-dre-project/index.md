@@ -13,15 +13,7 @@ description: "A step-by-step causal inference project using simulated coupon dat
 1. [Business Context](#1-Business-Context)
 2. [Generate the simulated data](#2-generate-the-simulated-data)
 3. [True ATE & True ATT & Naive_difference](#3-True-ATE-&-True-ATT-&-Naive_difference)
-4. [Train the models with cross-fitting](#4-train-the-models-with-cross-fitting)
-5. [Evaluate the propensity score model](#5-evaluate-the-propensity-score-model)
-6. [Check overlap](#6-check-overlap)
-7. [Inspect weights, ESS, and covariate balance](#7-inspect-weights-ess-and-covariate-balance)
-8. [Evaluate the outcome models](#8-evaluate-the-outcome-models)
-9. [Estimate ATE with AIPW](#9-estimate-ate-with-aipw)
-10. [Deliberately misspecify the models](#10-deliberately-misspecify-the-models)
-11. [Stress-test poor overlap](#11-stress-test-poor-overlap)
-12. [Summarize the diagnostics](#12-summarize-the-diagnostics)
+
 
 ## 1. Business Context
 Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. We want to know what is the average increase in customer spending caused by receiving a coupon.
