@@ -24,10 +24,13 @@ description: "A step-by-step causal inference project using simulated coupon dat
 12. [Summarize the diagnostics](#12-summarize-the-diagnostics)
 
 ## 1. Business Context
-Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. The goal is to estimate the increase in customer spending caused by issuing coupons.
+Consider an e-commerce platform that has already distributed coupons to some customers. Customers with higher historical spending and engagement were more likely to receive them. We want to know what is the average increase in customer spending caused by receiving a coupon.
 
-I use a simulated dataset of 10,000 users containing historical spending, pre-treatment engagement, coupon assignment, and subsequent spending. 
-
+I will use a simulated simple dataset of 10,000 users containing 4 variables: 
+(1) historical spending
+(2) pre-treatment engagement
+(3) coupon assignment 
+(4) subsequent spending
 
 ## 2. Generate the simulated data
 
