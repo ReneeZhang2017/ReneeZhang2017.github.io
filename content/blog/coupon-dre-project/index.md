@@ -85,6 +85,7 @@ display(df.describe())
 
 ### Output
 
+{{< notebook-outputs >}}
 `display(df.head(10))`
 
 | | past_spend | activity | treatment | outcome |
@@ -100,6 +101,8 @@ display(df.describe())
 | 8 | 25.622727 | 7 | 0 | 88.069488 |
 | 9 | 90.077188 | 3 | 0 | 85.696460 |
 
+<!-- output-split -->
+
 `display(df.describe())`
 
 | | past_spend | activity | treatment | outcome |
@@ -112,6 +115,7 @@ display(df.describe())
 | 50% | 99.660298 | 5.000000 | 0.000000 | 105.355246 |
 | 75% | 149.135540 | 8.000000 | 1.000000 | 134.962128 |
 | max | 199.995404 | 10.000000 | 1.000000 | 218.490703 |
+{{< /notebook-outputs >}}
 
 **Interpretation.** Each row represents one customer, with four observed variables. The first table shows the first 10 customers; the second summarizes all 10,000 customers. Approximately **49.84%** received a coupon. Engagement ranges from **0 to 10**, inclusive. The simulation's known average coupon effect is approximately **20.065** in this sample and **20.000** in the population. The true propensity scores and effects are retained for evaluation and are not used as model inputs.
 
