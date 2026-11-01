@@ -42,7 +42,7 @@ The DataFrame `df` is a simulated dataset of 10,000 customers. Each row represen
 
 3. **Coupon assignment (`coupon_assignment`):** I first calculate each customer's probability of receiving a coupon based on historical spending and engagement. Customers with higher spending and engagement have higher probabilities. I then use these probabilities to randomly assign coupons: `1` means the customer receives a coupon, and `0` means they do not. In this simulated sample, **4,984 customers (49.84%) receive a coupon**, while **5,016 (50.16%) do not**.
 
-4. **Subsequent spending (`outcome`):** I first calculate expected spending without a coupon as `20 + 0.5 * past_spend + 5 * activity`. For customers who receive a coupon, I add a coupon effect of `10 + 2 * activity`, so more engaged customers receive a larger spending lift. Finally, I add normally distributed random noise with a mean of 0 and a standard deviation of 10 to every customer's spending. The final formula is `outcome = baseline + coupon_assignment * true_effect + noise`.
+4. **Subsequent spending (`subsequent_spending`):** I first calculate expected spending without a coupon as `20 + 0.5 * past_spend + 5 * activity`. For customers who receive a coupon, I add a coupon effect of `10 + 2 * activity`, so more engaged customers receive a larger spending lift. Finally, I add normally distributed random noise with a mean of 0 and a standard deviation of 10 to every customer's spending. The final formula is `outcome = baseline + coupon_assignment * true_effect + noise`.
 
 ### Code
 
@@ -84,7 +84,7 @@ df = pd.DataFrame({
     'past_spend': past_spend,
     'activity': activity,
     'coupon_assignment': treatment,
-    'outcome': outcome
+    'subsequent_spending': outcome
 })
 
 display(df.head(10))
@@ -96,7 +96,7 @@ display(df.describe())
 {{< notebook-outputs >}}
 `display(df.head(10))`
 
-| | past_spend | activity | coupon_assignment | outcome |
+| | past_spend | activity | coupon_assignment | subsequent_spending |
 |---|---:|---:|---:|---:|
 | 0 | 154.791210 | 0 | 0 | 87.184820 |
 | 1 | 87.775688 | 7 | 1 | 116.847515 |
@@ -113,7 +113,7 @@ display(df.describe())
 
 `display(df.describe())`
 
-| | past_spend | activity | coupon_assignment | outcome |
+| | past_spend | activity | coupon_assignment | subsequent_spending |
 |---|---:|---:|---:|---:|
 | count | 10000.000000 | 10000.000000 | 10000.000000 | 10000.000000 |
 | mean | 99.424320 | 5.032600 | 0.498400 | 105.848177 |
@@ -158,16 +158,16 @@ Each row is one simulated user. Real data would also require checks for unique u
 assert not df.isna().any().any()
 assert set(df['coupon_assignment'].unique()) == {0, 1}
 assert np.isfinite(df.to_numpy()).all()
-print(df.groupby('coupon_assignment').agg(n=('outcome', 'size'), past_spend=('past_spend', 'mean'),
-      activity=('activity', 'mean'), outcome=('outcome', 'mean')).round(3))
-naive_difference = df.loc[df.coupon_assignment == 1, 'outcome'].mean() - df.loc[df.coupon_assignment == 0, 'outcome'].mean()
+print(df.groupby('coupon_assignment').agg(n=('subsequent_spending', 'size'), past_spend=('past_spend', 'mean'),
+      activity=('activity', 'mean'), subsequent_spending=('subsequent_spending', 'mean')).round(3))
+naive_difference = df.loc[df.coupon_assignment == 1, 'subsequent_spending'].mean() - df.loc[df.coupon_assignment == 0, 'subsequent_spending'].mean()
 print('Naive difference:', round(naive_difference, 3))
 ```
 
 ### Output
 
 ```text
-              n  past_spend  activity  outcome
+              n  past_spend  activity  subsequent_spending
 coupon_assignment                                     
 0          5016      84.870     4.178   83.326
 1          4984     114.072     5.893  128.515
@@ -196,7 +196,7 @@ The two outcome models **predict** on the validation users; their predictions ar
 ```python
 def cross_fit(data, ps_cols, outcome_cols, seed=42):
     T = data['coupon_assignment'].to_numpy()
-    Y = data['outcome'].to_numpy()
+    Y = data['subsequent_spending'].to_numpy()
     pred = {name: np.full(len(data), np.nan) for name in
             ['ps', 'mu0', 'mu1', 'base_ps', 'base0', 'base1']}
     counts = np.zeros(len(data), dtype=int)
@@ -212,9 +212,9 @@ def cross_fit(data, ps_cols, outcome_cols, seed=42):
         for state in [0, 1]:
             group = train.loc[train['coupon_assignment'] == state]
             model = LinearRegression()
-            model.fit(group[outcome_cols], group['outcome'])
+            model.fit(group[outcome_cols], group['subsequent_spending'])
             pred[f'mu{state}'][valid_idx] = model.predict(valid[outcome_cols])
-            pred[f'base{state}'][valid_idx] = group['outcome'].mean()
+            pred[f'base{state}'][valid_idx] = group['subsequent_spending'].mean()
         counts[valid_idx] += 1
     assert (counts == 1).all()  # Each user receives exactly one held-out prediction
     assert all(np.isfinite(v).all() for v in pred.values())
@@ -224,13 +224,13 @@ features = ['past_spend', 'activity']
 pred = cross_fit(df, features, features)
 for name in ['ps', 'mu0', 'mu1']:
     df[name] = pred[name]
-print(df[['coupon_assignment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
+print(df[['coupon_assignment', 'subsequent_spending', 'ps', 'mu0', 'mu1']].head().round(3))
 ```
 
 ### Output
 
 ```text
-   coupon_assignment  outcome     ps      mu0      mu1
+   coupon_assignment  subsequent_spending     ps      mu0      mu1
 0          0   87.185  0.391   97.504  107.908
 1          1  116.848  0.564   98.809  123.088
 2          1  135.199  0.530  115.895  130.228
@@ -253,7 +253,7 @@ AUC measures discrimination. Brier score and log loss assess probability predict
 
 ```python
 T = df['coupon_assignment'].to_numpy()
-Y = df['outcome'].to_numpy()
+Y = df['subsequent_spending'].to_numpy()
 ps = df['ps'].to_numpy()
 ps_metrics = pd.DataFrame([
     {'model': name, 'ROC_AUC': roc_auc_score(T, p), 'Brier': brier_score_loss(T, p),
@@ -617,8 +617,8 @@ for state in [0, 1]:
 ```text
                           scenario  outcome_only    AIPW  AIPW_error_vs_sample_truth
 0                        Both full          20.4  20.394                       0.329
-1  PS full, outcome omits activity          31.4  20.520                       0.455
-2  PS omits activity, outcome full          20.4  20.417                       0.352
+1  PS full, subsequent_spending omits activity          31.4  20.520                       0.455
+2  PS omits activity, subsequent_spending full          20.4  20.417                       0.352
 3               Both omit activity          31.4  31.416                      11.351
 Bad-PS weighted balance:
               feature  SMD_before  SMD_after
@@ -627,7 +627,7 @@ Bad-PS weighted balance:
 2  past_spend_squared       0.506      0.001
 3    activity_squared       0.548      0.593
 4    spend_x_activity       0.746      0.441
-Bad-outcome factual MAE by state:
+Bad-subsequent_spending factual MAE by state:
 0 14.748
 1 19.587
 ```
@@ -655,7 +655,7 @@ stress_rng = np.random.default_rng(2026)
 stress_true_ps = 1/(1+np.exp(-0.15*(stress.past_spend.to_numpy()-100)))
 stress_t = stress_rng.binomial(1, stress_true_ps)
 stress['coupon_assignment'] = stress_t
-stress['outcome'] = baseline + stress_t*true_effect + stress_rng.normal(0, 10, n)
+stress['subsequent_spending'] = baseline + stress_t*true_effect + stress_rng.normal(0, 10, n)
 stress_pred = cross_fit(stress, features, features)
 stress_w = weights_from_ps(stress_t, stress_pred['ps'])
 print('PS outside [0.05, 0.95]:', round(np.mean((stress_pred['ps']<.05)|(stress_pred['ps']>.95)), 3))
