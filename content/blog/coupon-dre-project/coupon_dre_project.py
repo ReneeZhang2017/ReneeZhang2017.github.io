@@ -23,22 +23,22 @@ true_effect = 10 + 2 * activity
 noise = rng.normal(0, 10, n)
 outcome = baseline + treatment * true_effect + noise
 df = pd.DataFrame({'past_spend': past_spend, 'activity': activity,
-                   'treatment': treatment, 'outcome': outcome})
+                   'coupon_assignment': treatment, 'outcome': outcome})
 true_sample_ate = true_effect.mean()
 true_population_ate = 20.0
 print(df.head().round(2))
 print('Sample true effect:', round(true_sample_ate, 3), '| Population ATE:', true_population_ate)
 
 assert not df.isna().any().any()
-assert set(df['treatment'].unique()) == {0, 1}
+assert set(df['coupon_assignment'].unique()) == {0, 1}
 assert np.isfinite(df.to_numpy()).all()
-print(df.groupby('treatment').agg(n=('outcome', 'size'), past_spend=('past_spend', 'mean'),
+print(df.groupby('coupon_assignment').agg(n=('outcome', 'size'), past_spend=('past_spend', 'mean'),
       activity=('activity', 'mean'), outcome=('outcome', 'mean')).round(3))
-naive_difference = df.loc[df.treatment == 1, 'outcome'].mean() - df.loc[df.treatment == 0, 'outcome'].mean()
+naive_difference = df.loc[df.coupon_assignment == 1, 'outcome'].mean() - df.loc[df.coupon_assignment == 0, 'outcome'].mean()
 print('Naive difference:', round(naive_difference, 3))
 
 def cross_fit(data, ps_cols, outcome_cols, seed=42):
-    T = data['treatment'].to_numpy()
+    T = data['coupon_assignment'].to_numpy()
     Y = data['outcome'].to_numpy()
     pred = {name: np.full(len(data), np.nan) for name in
             ['ps', 'mu0', 'mu1', 'base_ps', 'base0', 'base1']}
@@ -49,11 +49,11 @@ def cross_fit(data, ps_cols, outcome_cols, seed=42):
         valid = data.iloc[valid_idx]
         ps_model = Pipeline([('scaler', StandardScaler()),
                              ('model', LogisticRegression(max_iter=1000))])
-        ps_model.fit(train[ps_cols], train['treatment'])
+        ps_model.fit(train[ps_cols], train['coupon_assignment'])
         pred['ps'][valid_idx] = ps_model.predict_proba(valid[ps_cols])[:, 1]
-        pred['base_ps'][valid_idx] = train['treatment'].mean()
+        pred['base_ps'][valid_idx] = train['coupon_assignment'].mean()
         for state in [0, 1]:
-            group = train.loc[train['treatment'] == state]
+            group = train.loc[train['coupon_assignment'] == state]
             model = LinearRegression()
             model.fit(group[outcome_cols], group['outcome'])
             pred[f'mu{state}'][valid_idx] = model.predict(valid[outcome_cols])
@@ -67,9 +67,9 @@ features = ['past_spend', 'activity']
 pred = cross_fit(df, features, features)
 for name in ['ps', 'mu0', 'mu1']:
     df[name] = pred[name]
-print(df[['treatment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
+print(df[['coupon_assignment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
 
-T = df['treatment'].to_numpy()
+T = df['coupon_assignment'].to_numpy()
 Y = df['outcome'].to_numpy()
 ps = df['ps'].to_numpy()
 ps_metrics = pd.DataFrame([
@@ -95,7 +95,7 @@ print('Counts by PS bin:\n', overlap_counts)
 print('Share with PS outside [0.05, 0.95]:', round(np.mean((ps < .05) | (ps > .95)), 4))
 spend_bin = pd.cut(df.past_spend, bins=[0, 50, 100, 150, 200], include_lowest=True)
 activity_bin = pd.cut(df.activity, bins=[-1, 3, 7, 10])
-support_grid = pd.crosstab([spend_bin, activity_bin], df.treatment).reindex(columns=[0, 1], fill_value=0)
+support_grid = pd.crosstab([spend_bin, activity_bin], df.coupon_assignment).reindex(columns=[0, 1], fill_value=0)
 print('Covariate grid counts (coarse diagnostic only):\n', support_grid)
 plt.figure(figsize=(7, 4))
 for state, label in [(0, 'No coupon'), (1, 'Coupon')]:
@@ -160,12 +160,12 @@ for state in [0, 1]:
 outcome_metrics = pd.DataFrame(outcome_rows)
 print(outcome_metrics.round(3))
 factual_prediction = np.where(T == 1, pred['mu1'], pred['mu0'])
-residuals = df[['treatment', 'past_spend', 'activity']].copy()
+residuals = df[['coupon_assignment', 'past_spend', 'activity']].copy()
 residuals['residual'] = Y - factual_prediction
 for col in features:
     residuals['bin'] = pd.qcut(residuals[col], 4, duplicates='drop')
     print('Residuals by', col)
-    print(residuals.groupby(['treatment', 'bin'], observed=True).agg(
+    print(residuals.groupby(['coupon_assignment', 'bin'], observed=True).agg(
         n=('residual', 'size'), mean_residual=('residual', 'mean'),
         residual_sd=('residual', 'std')).round(3))
 fig, axes = plt.subplots(1, 2, figsize=(10, 4))
@@ -219,7 +219,7 @@ stress = df[['past_spend', 'activity']].copy()
 stress_rng = np.random.default_rng(2026)
 stress_true_ps = 1/(1+np.exp(-0.15*(stress.past_spend.to_numpy()-100)))
 stress_t = stress_rng.binomial(1, stress_true_ps)
-stress['treatment'] = stress_t
+stress['coupon_assignment'] = stress_t
 stress['outcome'] = baseline + stress_t*true_effect + stress_rng.normal(0, 10, n)
 stress_pred = cross_fit(stress, features, features)
 stress_w = weights_from_ps(stress_t, stress_pred['ps'])
