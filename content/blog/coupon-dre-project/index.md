@@ -127,11 +127,11 @@ display(df.describe())
 
 
 
-## 3. True ATE & Naive_difference
+## 3. True ATE Vs. Naive_difference
 
-**Goal:** check basic data quality and see what a simple treated-versus-control comparison would report.
+Because this dataset is simulated, we know the true average effect of receiving a coupon. This gives us a benchmark for evaluating how accurately different methods estimate the causal effect.
 
-Each row is one simulated user. Real data would also require checks for unique user IDs, duplicate coupon assignments, missingness mechanisms, and a consistent follow-up window.
+Let's compare this benchmark with the naive difference: the average spending of customers who received a coupon minus that of customers who did not.
 
 ### Code
 
