@@ -1,9 +1,9 @@
 ---
-title: "Do Coupons Increase Customer Spending? A Practical Guide to Doubly Robust Estimation"
+title: "Do Coupons Increase Customer Spending? A Practical Guide to Causal Inference"
 date: 2026-10-21
 draft: false
 categories: ["Causal Inference"]
-description: "A step-by-step causal inference project using simulated coupon data to estimate treatment effects with doubly robust estimation."
+description: "A step-by-step causal inference project using simulated coupon data to estimate treatment effects."
 ---
 
 > **Project type: Simulation-based learning project.** In this case study, I walk through a simplified causal inference project to demonstrate how doubly robust estimation can estimate the average effect of issuing coupons on customer spending. All results are based on simulated data and do not represent actual business outcomes at any company. 
