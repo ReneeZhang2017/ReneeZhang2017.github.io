@@ -4,7 +4,7 @@
 <title>{{ if .IsHome }}ALL blogs{{ else }}{{ .Title }}{{ end }} · {{ site.Title }}</title>
 <meta name="description" content="{{ .Description | default .Summary | default site.Params.description | plainify }}">
 <link rel="canonical" href="{{ .Permalink }}">
-<link rel="stylesheet" href="{{ "css/main.css" | relURL }}">
+<link rel="stylesheet" href="{{ "css/main.css" | relURL }}?v={{ readFile "static/css/main.css" | sha256 }}">
 {{ with .OutputFormats.Get "rss" }}<link rel="alternate" type="application/rss+xml" title="{{ site.Title }}" href="{{ .Permalink }}">{{ end }}
 <script src="{{ "js/theme.js" | relURL }}" defer></script>
 </head><body>
