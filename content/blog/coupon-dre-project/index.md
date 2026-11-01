@@ -127,7 +127,7 @@ display(df.describe())
 
 
 
-## 3. True ATE Vs. Naive_difference
+## 3. True ATE Vs. True ATT Vs. Naive_difference
 
 Because this dataset is simulated, we know each customer’s true coupon effect. We can therefore calculate two benchmarks: the true ATE, which averages these effects across all 10,000 customers, and the true ATT, which averages them only among customers who actually received a coupon.
 
