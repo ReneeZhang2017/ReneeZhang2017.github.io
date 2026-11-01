@@ -136,25 +136,44 @@ Let's compare this benchmark with the naive difference: the average spending of 
 ### Code
 
 ```python
-assert not df.isna().any().any()
-assert set(df['coupon_assignment'].unique()) == {0, 1}
-assert np.isfinite(df.to_numpy()).all()
-print(df.groupby('coupon_assignment').agg(n=('subsequent_spending', 'size'), past_spend=('past_spend', 'mean'),
-      activity=('activity', 'mean'), subsequent_spending=('subsequent_spending', 'mean')).round(3))
-naive_difference = df.loc[df.coupon_assignment == 1, 'subsequent_spending'].mean() - df.loc[df.coupon_assignment == 0, 'subsequent_spending'].mean()
-print('Naive difference:', round(naive_difference, 3))
+# True ATE: the average of the individual coupon effects
+# true_effect = 10 + 2 * activity
+true_ate = true_effect.mean()
+
+# Naive difference: average observed spending with vs. without a coupon
+group_mean = df.groupby('coupon_assignment')['subsequent_spending'].mean()
+naive_difference = group_mean.loc[1] - group_mean.loc[0]
+
+display(
+    f"True ATE: {true_ate:.2f}. "
+    "The average difference in spending if all 10,000 customers received "
+    "a coupon versus if none of those same customers received a coupon."
+)
+
+display(
+    f"Naive Difference: {naive_difference:.2f}. "
+    "The difference in average observed spending between customers "
+    "who received a coupon and those who did not."
+)
+
+# Compare the two groups before coupon assignment
+display(
+    df.groupby('coupon_assignment')[['past_spend', 'activity']].mean()
+)
 ```
 
 ### Output
 
 ```text
-              n  past_spend  activity  subsequent_spending
-coupon_assignment                                     
-0          5016      84.870     4.178   83.326
-1          4984     114.072     5.893  128.515
-Naive difference: 45.19
+'True ATE: 20.07. The average difference in spending if all 10,000 customers received a coupon versus if none of those same customers received a coupon.'
+
+'Naive Difference: 45.19. The difference in average observed spending between customers who received a coupon and those who did not.'
 ```
 
+| coupon_assignment | past_spend | activity |
+|---|---:|---:|
+| 0 | 84.869642 | 4.178030 |
+| 1 | 114.072446 | 5.892657 |
 
 **Interpretation.** Coupon recipients have higher historical spending (**114.072 versus 84.870**) and engagement (**5.893 versus 4.178**). Their subsequent spending is higher by about **45.190** units. Since the known effect is around 20, that raw comparison substantially overstates the coupon effect in this simulation. It mixes treatment with pre-existing differences.
 
