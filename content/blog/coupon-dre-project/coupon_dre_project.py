@@ -23,7 +23,7 @@ true_effect = 10 + 2 * activity
 noise = rng.normal(0, 10, n)
 outcome = baseline + treatment * true_effect + noise
 df = pd.DataFrame({'past_spend': past_spend, 'activity': activity,
-                   'coupon_assignment': treatment, 'outcome': outcome})
+                   'coupon_assignment': treatment, 'subsequent_spending': outcome})
 true_sample_ate = true_effect.mean()
 true_population_ate = 20.0
 print(df.head().round(2))
@@ -32,14 +32,14 @@ print('Sample true effect:', round(true_sample_ate, 3), '| Population ATE:', tru
 assert not df.isna().any().any()
 assert set(df['coupon_assignment'].unique()) == {0, 1}
 assert np.isfinite(df.to_numpy()).all()
-print(df.groupby('coupon_assignment').agg(n=('outcome', 'size'), past_spend=('past_spend', 'mean'),
-      activity=('activity', 'mean'), outcome=('outcome', 'mean')).round(3))
-naive_difference = df.loc[df.coupon_assignment == 1, 'outcome'].mean() - df.loc[df.coupon_assignment == 0, 'outcome'].mean()
+print(df.groupby('coupon_assignment').agg(n=('subsequent_spending', 'size'), past_spend=('past_spend', 'mean'),
+      activity=('activity', 'mean'), subsequent_spending=('subsequent_spending', 'mean')).round(3))
+naive_difference = df.loc[df.coupon_assignment == 1, 'subsequent_spending'].mean() - df.loc[df.coupon_assignment == 0, 'subsequent_spending'].mean()
 print('Naive difference:', round(naive_difference, 3))
 
 def cross_fit(data, ps_cols, outcome_cols, seed=42):
     T = data['coupon_assignment'].to_numpy()
-    Y = data['outcome'].to_numpy()
+    Y = data['subsequent_spending'].to_numpy()
     pred = {name: np.full(len(data), np.nan) for name in
             ['ps', 'mu0', 'mu1', 'base_ps', 'base0', 'base1']}
     counts = np.zeros(len(data), dtype=int)
@@ -55,9 +55,9 @@ def cross_fit(data, ps_cols, outcome_cols, seed=42):
         for state in [0, 1]:
             group = train.loc[train['coupon_assignment'] == state]
             model = LinearRegression()
-            model.fit(group[outcome_cols], group['outcome'])
+            model.fit(group[outcome_cols], group['subsequent_spending'])
             pred[f'mu{state}'][valid_idx] = model.predict(valid[outcome_cols])
-            pred[f'base{state}'][valid_idx] = group['outcome'].mean()
+            pred[f'base{state}'][valid_idx] = group['subsequent_spending'].mean()
         counts[valid_idx] += 1
     assert (counts == 1).all()  # Each user receives exactly one held-out prediction
     assert all(np.isfinite(v).all() for v in pred.values())
@@ -67,10 +67,10 @@ features = ['past_spend', 'activity']
 pred = cross_fit(df, features, features)
 for name in ['ps', 'mu0', 'mu1']:
     df[name] = pred[name]
-print(df[['coupon_assignment', 'outcome', 'ps', 'mu0', 'mu1']].head().round(3))
+print(df[['coupon_assignment', 'subsequent_spending', 'ps', 'mu0', 'mu1']].head().round(3))
 
 T = df['coupon_assignment'].to_numpy()
-Y = df['outcome'].to_numpy()
+Y = df['subsequent_spending'].to_numpy()
 ps = df['ps'].to_numpy()
 ps_metrics = pd.DataFrame([
     {'model': name, 'ROC_AUC': roc_auc_score(T, p), 'Brier': brier_score_loss(T, p),
@@ -220,7 +220,7 @@ stress_rng = np.random.default_rng(2026)
 stress_true_ps = 1/(1+np.exp(-0.15*(stress.past_spend.to_numpy()-100)))
 stress_t = stress_rng.binomial(1, stress_true_ps)
 stress['coupon_assignment'] = stress_t
-stress['outcome'] = baseline + stress_t*true_effect + stress_rng.normal(0, 10, n)
+stress['subsequent_spending'] = baseline + stress_t*true_effect + stress_rng.normal(0, 10, n)
 stress_pred = cross_fit(stress, features, features)
 stress_w = weights_from_ps(stress_t, stress_pred['ps'])
 print('PS outside [0.05, 0.95]:', round(np.mean((stress_pred['ps']<.05)|(stress_pred['ps']>.95)), 3))
