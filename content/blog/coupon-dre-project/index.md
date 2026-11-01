@@ -13,6 +13,7 @@ description: "A step-by-step causal inference project using simulated coupon dat
 1. [Business Context](#1-Business-Context)
 2. [Generate the simulated data](#2-generate-the-simulated-data)
 3. [True ATE vs. True ATT vs. Naive Difference](#3-true-ate-vs-true-att-vs-naive-difference)
+4. [Adjust for Selection Bias with Propensity Score Matching](#4-adjust-for-selection-bias-with-propensity-score-matching)
 
 
 ## 1. Business Context
@@ -198,9 +199,16 @@ Coupon recipients already had higher historical spending (**114.07 vs. 84.87**) 
 
 As a result, the naive difference mixes the coupon’s causal effect with pre-existing differences between the groups. It overstates both ATE and ATT in this simulation.
 
-## 4. Train the models with cross-fitting
+## 4. Adjust for Selection Bias with Propensity Score Matching
 
-**Goal:** predict each user's propensity score and expected outcomes without using that user's labels to train the models.
+The naive difference compares groups with different historical spending and engagement. To make a more comparable comparison, I use propensity score matching (PSM).
+
+I first estimate each customer’s probability of receiving a coupon using historical spending and pre-treatment engagement. I then match coupon recipients with non-recipients who have similar estimated probabilities.
+
+The initial target is ATT: the average coupon effect among actual coupon recipients. However, if some recipients cannot be matched, the estimate applies to the recipients retained in the matched sample.
+
+
+
 
 | Model | Training rows within each training fold | Prediction for every held-out user |
 |---|---|---|
