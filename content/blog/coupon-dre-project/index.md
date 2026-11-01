@@ -182,15 +182,21 @@ display(
 
 **Interpretation.**
 
-**True ATE vs. True ATT: different target populations.** ATE (Average Treatment Effect) averages the causal effect across all 10,000 customers. ATT (Average Treatment Effect on the Treated) averages it only among the 4,984 customers who actually received coupons. Both compare the same customers under two scenarios: receiving a coupon and not receiving one. In real-world data, we cannot observe both outcomes for the same customer under otherwise identical conditions. Here, we know both benchmarks because we specified the simulation's effect mechanism.
+**1. True ATE vs. True ATT: effects for different target populations.**
+
+ATE (Average Treatment Effect) averages the causal effect across all 10,000 customers. ATT (Average Treatment Effect on the Treated) averages it only among the 4,984 customers who actually received coupons. Each compares its target customers under two scenarios: receiving a coupon and not receiving one. In real-world data, we cannot observe both outcomes for the same customer under otherwise identical conditions. Here, we know both benchmarks because we specified the simulation’s effect mechanism.
 
 The true sample ATE is **$20.07**, while the true sample ATT is **$21.79**. Coupon recipients have higher average engagement, and we defined the coupon effect as `10 + 2 * activity`. Their average coupon effect is therefore larger. This difference reflects the target populations and varying coupon effects; it is not an estimation error.
 
-**Naive Difference vs. True ATT: selection bias.** The naive difference is approximately **$45.19** per customer ($128.52 − $83.33), substantially higher than the true ATT of **$21.79**. Coupon recipients already had higher historical spending (**114.07 vs. 84.87**) and engagement (**5.89 vs. 4.18**). Both characteristics also increase subsequent spending, even without a coupon.
+**2. Naive Difference vs. both causal benchmarks: selection bias.**
 
-This creates selection bias: customers who would tend to spend more without a coupon are more likely to receive one. The naive difference combines the coupon's causal effect among recipients with pre-existing differences in what the two groups would spend without coupons. It is therefore not a reliable estimate of either ATE or ATT in this example.
+The naive difference simply subtracts the average observed spending of non-recipients from that of coupon recipients, without adjusting for differences between the groups.
 
-These benchmarks help us evaluate the methods that follow: an ATT estimate should be compared with the true ATT for the same target population, while an ATE estimate should be compared with the true ATE. If matching excludes some coupon recipients, the corresponding benchmark is the true average effect among the recipients retained.
+The naive difference is **$45.19** ($128.52 − $83.33), substantially higher than both the true ATE of **$20.07** and the true ATT of **$21.79**.
+
+Coupon recipients already had higher historical spending (**114.07 vs. 84.87**) and engagement (**5.89 vs. 4.18**). These characteristics also increase spending without a coupon. This creates selection bias: customers who would tend to spend more anyway are more likely to receive a coupon.
+
+As a result, the naive difference mixes the coupon’s causal effect with pre-existing differences between the groups. It overstates both ATE and ATT in this simulation.
 
 ## 4. Train the models with cross-fitting
 
