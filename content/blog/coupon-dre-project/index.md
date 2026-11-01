@@ -6,7 +6,7 @@ categories: ["Causal Inference"]
 description: "A step-by-step causal inference project using simulated coupon data to estimate treatment effects with doubly robust estimation."
 ---
 
-> **Project type: Simulation-based learning project.** In this case study, I walk through a simplified causal inference project to demonstrate how doubly robust estimation can estimate the average effect of issuing coupons on customer spending. All results are based on simulated data and do not represent actual business outcomes at any company.
+> **Project type: Simulation-based learning project.** In this case study, I walk through a simplified causal inference project to demonstrate how doubly robust estimation can estimate the average effect of issuing coupons on customer spending. All results are based on simulated data and do not represent actual business outcomes at any company. 
 
 ### Jump to a step
 
@@ -125,26 +125,7 @@ display(df.describe())
 | max | 199.995404 | 10.000000 | 1.000000 | 218.490703 |
 {{< /notebook-outputs >}}
 
-**Interpretation.** Each row represents one customer, with four observed variables. The first table shows the first 10 customers; the second summarizes all 10,000 customers. Approximately **49.84%** received a coupon. Engagement ranges from **0 to 10**, inclusive. The simulation's known average coupon effect is approximately **20.065** in this sample and **20.000** in the population. The true propensity scores and effects are retained for evaluation and are not used as model inputs.
 
-These tables are saved Python outputs, displayed in a notebook-style layout. Editing the code on this page does not execute it; rerun the code to regenerate the tables after changing the simulation.
-
-### Setup for later steps
-
-The following cell imports the modeling tools used in later sections and records the simulation's known effects for comparison.
-
-```python
-import matplotlib.pyplot as plt
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_auc_score, log_loss, brier_score_loss, mean_absolute_error, mean_squared_error
-from sklearn.calibration import calibration_curve
-
-true_sample_ate = true_effect.mean()
-true_population_ate = 20.0
-```
 
 ## 3. Check the data and the raw spending difference
 
