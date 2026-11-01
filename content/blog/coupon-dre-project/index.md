@@ -36,12 +36,92 @@ I will use a simulated simple dataset of 10,000 users containing 4 variables:
 
 Historical spending and engagement both increase the chance of receiving a coupon and the amount a user would spend. Engagement also changes the coupon's effect: `true_effect = 10 + 2 * activity`.
 
-
 ### Code
 
 ```python
 import numpy as np
 import pandas as pd
+
+# Create a random number generator and store it in the variable 'rng'.
+rng = np.random.default_rng(42)
+
+# Set n as the number of customers, and n=10,000
+n = 10000
+
+# (1) Historical Spending: a random number between 0 to 200
+past_spend = rng.uniform(0, 200, n)
+
+# (2) pre-treatment engagement: a random integer between 0 to 10
+activity = rng.integers(0, 11, n)
+
+# (3) Coupon Assignment: customers with high past_spend and high activity are more likely to receive a coupon
+# Create a coupon issuance probability to generate simulated coupon assignments.
+# treatment=1 means the customer received a coupon; treatment=0 means they did not.
+log_odds = -2 + 0.01 * past_spend + 0.2 * activity
+true_ps = 1 / (1 + np.exp(-log_odds))
+treatment = rng.binomial(1, true_ps)
+
+# (4) Subsequent Spending
+# Spending when there is no coupon assigned
+baseline = 20 + 0.5 * past_spend + 5 * activity
+# The true coupon effect when a customer receives a coupon
+true_effect = 10 + 2 * activity
+# Add noise to spending
+noise = rng.normal(0, 10, n)
+# The final subsequent spending = baseline + treatment * true_effect + noise
+outcome = baseline + treatment * true_effect + noise
+
+# Aggregate all data into a dataframe
+df = pd.DataFrame({
+    'past_spend': past_spend,
+    'activity': activity,
+    'treatment': treatment,
+    'outcome': outcome
+})
+
+display(df.head(10))
+display(df.describe())
+```
+
+### Output
+
+`display(df.head(10))`
+
+| | past_spend | activity | treatment | outcome |
+|---|---:|---:|---:|---:|
+| 0 | 154.791210 | 0 | 0 | 87.184820 |
+| 1 | 87.775688 | 7 | 1 | 116.847515 |
+| 2 | 171.719584 | 2 | 1 | 135.199143 |
+| 3 | 139.473606 | 7 | 0 | 124.498443 |
+| 4 | 18.835470 | 6 | 0 | 54.645706 |
+| 5 | 195.124470 | 2 | 1 | 132.531542 |
+| 6 | 152.227940 | 5 | 1 | 130.981857 |
+| 7 | 157.212861 | 0 | 1 | 107.288876 |
+| 8 | 25.622727 | 7 | 0 | 88.069488 |
+| 9 | 90.077188 | 3 | 0 | 85.696460 |
+
+`display(df.describe())`
+
+| | past_spend | activity | treatment | outcome |
+|---|---:|---:|---:|---:|
+| count | 10000.000000 | 10000.000000 | 10000.000000 | 10000.000000 |
+| mean | 99.424320 | 5.032600 | 0.498400 | 105.848177 |
+| std | 57.644184 | 3.155144 | 0.500022 | 40.495370 |
+| min | 0.062884 | 0.000000 | 0.000000 | -1.792771 |
+| 25% | 49.207598 | 2.000000 | 0.000000 | 75.279554 |
+| 50% | 99.660298 | 5.000000 | 0.000000 | 105.355246 |
+| 75% | 149.135540 | 8.000000 | 1.000000 | 134.962128 |
+| max | 199.995404 | 10.000000 | 1.000000 | 218.490703 |
+
+**Interpretation.** Each row represents one customer, with four observed variables. The first table shows the first 10 customers; the second summarizes all 10,000 customers. Approximately **49.84%** received a coupon. Engagement ranges from **0 to 10**, inclusive. The simulation's known average coupon effect is approximately **20.065** in this sample and **20.000** in the population. The true propensity scores and effects are retained for evaluation and are not used as model inputs.
+
+These tables are saved Python outputs, displayed in a notebook-style layout. Editing the code on this page does not execute it; rerun the code to regenerate the tables after changing the simulation.
+
+### Setup for later steps
+
+The following cell imports the modeling tools used in later sections and records the simulation's known effects for comparison.
+
+```python
 import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -50,41 +130,9 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score, log_loss, brier_score_loss, mean_absolute_error, mean_squared_error
 from sklearn.calibration import calibration_curve
 
-pd.set_option('display.max_columns', 20)
-pd.set_option('display.width', 160)
-rng = np.random.default_rng(42)
-n = 10000
-past_spend = rng.uniform(0, 200, n)
-activity = rng.integers(0, 11, n)
-log_odds = -2 + 0.01 * past_spend + 0.2 * activity
-true_ps = 1 / (1 + np.exp(-log_odds))
-treatment = rng.binomial(1, true_ps)
-baseline = 20 + 0.5 * past_spend + 5 * activity
-true_effect = 10 + 2 * activity
-noise = rng.normal(0, 10, n)
-outcome = baseline + treatment * true_effect + noise
-df = pd.DataFrame({'past_spend': past_spend, 'activity': activity,
-                   'treatment': treatment, 'outcome': outcome})
 true_sample_ate = true_effect.mean()
 true_population_ate = 20.0
-print(df.head().round(2))
-print('Sample true effect:', round(true_sample_ate, 3), '| Population ATE:', true_population_ate)
 ```
-
-### Output
-
-```text
-   past_spend  activity  treatment  outcome
-0      154.79         0          0    87.18
-1       87.78         7          1   116.85
-2      171.72         2          1   135.20
-3      139.47         7          0   124.50
-4       18.84         6          0    54.65
-Sample true effect: 20.065 | Population ATE: 20.0
-```
-
-
-**Interpretation.** The first rows show the four observed columns. We also retain the known treatment-effect mechanism for evaluation. The sample's mean true effect is approximately **20.065**; the population ATE is **20.000**. The true propensity score and true effect are not passed to the fitted models.
 
 ## 3. Check the data and the raw spending difference
 
