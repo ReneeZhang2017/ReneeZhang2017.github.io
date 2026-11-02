@@ -285,11 +285,7 @@ display(psm_data)
 
 To find a suitable non-recipient for each recipient, this analysis uses **greedy nearest-neighbor matching**. “Greedy” means choosing the best available option at each step, then moving on without revisiting earlier decisions. Here, the best available option is the unused control with the smallest absolute difference in **logit propensity scores**.
 
-The **logit propensity score** is calculated as:
-
-**logit(p̂ᵢ) = ln(p̂ᵢ / (1 − p̂ᵢ))**
-
-where p̂ᵢ is customer i’s estimated probability of receiving a coupon, and ln denotes the natural logarithm. The matching distance is the absolute difference between the recipient’s and non-recipient’s logit propensity scores.
+![Propensity score p is a probability between 0 and 1; its logit transformation is logit(p) = ln(p / (1 - p)).](logit-propensity-score.png)
 
 A **caliper**, or maximum permitted matching distance, is set to **0.2 times the standard deviation of the estimated logit scores**, approximately **0.1693** in this run. If the nearest available control exceeds this distance, the recipient remains unmatched. This threshold is a starting point for the matching design; its suitability is assessed through the matching diagnostics that follow.
 
