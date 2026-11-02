@@ -279,11 +279,9 @@ display(psm_data)
 
 **Matching options**
 
-- **1:1 without replacement:** Each treated observation is matched to one control, and each control can be used at most once.
-- **1:1 with replacement:** Each treated observation is matched to one control, but the same control can be reused for multiple treated observations.
-- **1:k matching:** Each treated observation is matched to k controls. This approach can be used with or without replacement.
-
-Matching ratio and replacement are separate choices. This analysis uses **1:1 matching without replacement**.
+- **1:1 without replacement** (This analysis will use **1:1 matching without replacement**.)
+- **1:1 with replacement**
+- **1:k matching**
 
 For each coupon recipient, I select the nearest available non-recipient on the **logit propensity score** scale. I use a caliper of **0.2 standard deviations of the estimated logit scores**, approximately **0.1693** in this run. This limits the permitted distance; it is an illustrative matching choice rather than a universal optimal setting.
 
