@@ -205,6 +205,34 @@ Suppose our goal is to estimate ATT: the average effect of coupons on customers 
 
 The idea of PSM is to find comparable customers who did not receive coupons and use their spending to approximate what coupon recipients would have spent without one.
 
+### How does PSM work?
+
+1. **Estimate propensity scores.**
+
+   A **propensity score** is the probability of receiving treatment given a set of observed pre-treatment characteristics. It can be estimated using a classification model, such as logistic regression, with treatment assignment as the target.
+
+   In this case, treatment is receiving a coupon. The model estimates each customer’s probability of receiving one, where coupon assignment is 1 for recipients and 0 for non-recipients.
+
+2. **Choose the model inputs.**
+
+   **Confounders** are variables that influence both treatment assignment and the outcome. They can create pre-existing differences between treatment and control groups, making a simple outcome comparison misleading. Including these variables in the propensity score model helps matching adjust for those differences.
+
+   In this case, historical spending and pre-treatment engagement are confounders. Customers with higher values are more likely to receive coupons and would also tend to spend more without a coupon.
+
+3. **Match observations and assess comparability.**
+
+   **Propensity score matching** pairs treated observations with untreated observations that have similar propensity scores. One approach is **1:1 matching**, which selects one control observation for each matched treated observation.
+
+   Similar propensity scores do not guarantee identical characteristics within each pair. **Covariate balance** describes how similar the distributions of pre-treatment characteristics are between the matched groups and must be checked after matching.
+
+   In this case, each matched coupon recipient is paired with a non-recipient. Matching quality is assessed by comparing historical spending and engagement between the matched groups.
+
+4. **Estimate the treatment effect.**
+
+   With adequate matching quality and under the required causal assumptions, the average outcome difference between matched treated and control observations can estimate the average treatment effect among the retained treated observations. If treated observations are excluded, the estimate does not automatically apply to the entire original treated population.
+
+   In this case, the average subsequent spending difference between matched coupon recipients and non-recipients estimates the coupon’s effect among the retained recipients.
+
 ### 4.1 Estimate propensity scores
 
 I use logistic regression to estimate the probability of receiving a coupon from historical spending and pre-treatment engagement. Subsequent spending is not used to fit the model or choose matches. The estimated scores are used for matching; the simulation's `true_ps` is not used.
