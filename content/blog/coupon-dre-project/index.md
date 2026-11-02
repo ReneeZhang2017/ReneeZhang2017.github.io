@@ -377,7 +377,15 @@ Check 1: Customer counts by propensity score range
 | (0.6, 0.8] | 833 | 1807 |
 | (0.8, 1.0] | 58 | 470 |
 
-**Interpretation.** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
+**Interpretation：** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
+
+**Matching options**
+
+- **1:1 without replacement:** Each treated observation is matched to one control, and each control can be used at most once.
+- **1:1 with replacement:** Each treated observation is matched to one control, but the same control can be reused for multiple treated observations.
+- **1:k matching:** Each treated observation is matched to k controls. This approach can be used with or without replacement.
+
+Matching ratio and replacement are separate choices. This analysis uses **1:1 matching without replacement**.
 
 ### 4.3 Perform 1:1 matching
 
