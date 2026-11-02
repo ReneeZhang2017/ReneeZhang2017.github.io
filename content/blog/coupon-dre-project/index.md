@@ -275,9 +275,9 @@ display(psm_data)
 
 10000 rows × 5 columns
 
-### 4.2 How to Assess Whether PSM Is Good Enough
+### 4.2 How to Assess Whether This PSM Model Is Good Enough
 
-The quality of a PSM analysis is assessed using four checks.
+The quality of the PSM analysis is assessed using four checks.
 
 | Check | When to check | Purpose | What to examine |
 |---|---|---|---|
