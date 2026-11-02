@@ -286,8 +286,6 @@ The quality of a PSM analysis is assessed using four checks.
 | **3. Covariate balance** | After matching | Assess whether matching reduces pre-treatment differences between groups. | Before-and-after SMDs, variance ratios, and covariate distributions. |
 | **4. Sample retention and target population** | After matching | Understand who remains in the analysis and whom the estimate represents. | Matched/unmatched counts, retention rates, and characteristics of retained versus excluded treated observations. |
 
-These checks assess the observed matching design. They cannot establish that all confounders have been measured or guarantee an unbiased causal estimate.
-
 #### Check 1: Overlap
 
 Before matching, I count coupon recipients and non-recipients in five propensity score ranges. This is a coarse support diagnostic, not proof that every customer has a comparable counterpart.
