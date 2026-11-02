@@ -288,31 +288,60 @@ The quality of a PSM analysis is assessed using four checks.
 
 #### Check 1: Overlap
 
-Before matching, I count coupon recipients and non-recipients in five propensity score ranges. This is a coarse support diagnostic, not proof that every customer has a comparable counterpart.
+#### Code
 
 ```python
-# Count recipients and non-recipients in each propensity score range
-score_bins = pd.cut(
-    psm_data['propensity_score'],
-    bins=np.linspace(0, 1, 6),
-    include_lowest=True
+import matplotlib.pyplot as plt
+
+features = ['past_spend', 'activity']
+
+assert psm_data.index.is_unique, "Each customer must have a unique index."
+
+recipients = psm_data.loc[
+    psm_data['coupon_assignment'] == 1
+].copy()
+
+non_recipients = psm_data.loc[
+    psm_data['coupon_assignment'] == 0
+].copy()
+
+
+# ============================================================
+# Check 1: Overlap — before matching
+# ============================================================
+
+# Compare propensity score distributions
+plt.figure(figsize=(8, 4))
+
+bins = np.linspace(0, 1, 21)
+
+plt.hist(
+    non_recipients['propensity_score'],
+    bins=bins,
+    density=True,
+    alpha=0.5,
+    label='No coupon'
 )
-overlap = pd.crosstab(
-    score_bins,
-    psm_data['coupon_assignment']
+
+plt.hist(
+    recipients['propensity_score'],
+    bins=bins,
+    density=True,
+    alpha=0.5,
+    label='Coupon'
 )
-display(overlap)
+
+plt.xlabel('Estimated propensity score')
+plt.ylabel('Density')
+plt.title('Propensity score overlap before matching')
+plt.legend()
+plt.tight_layout()
+plt.show()
 ```
 
 #### Output
 
-| propensity_score | coupon_assignment = 0 | coupon_assignment = 1 |
-|---|---:|---:|
-| (-0.001, 0.2] | 475 | 102 |
-| (0.2, 0.4] | 1827 | 827 |
-| (0.4, 0.6] | 1824 | 1777 |
-| (0.6, 0.8] | 832 | 1808 |
-| (0.8, 1.0] | 58 | 470 |
+![Propensity score overlap before matching](overlap-before-matching.png)
 
 **Interpretation.** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
 
