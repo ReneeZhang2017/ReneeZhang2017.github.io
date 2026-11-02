@@ -201,11 +201,9 @@ As a result, the naive difference mixes the coupon’s causal effect with pre-ex
 
 ## 4. Adjust for Selection Bias with Propensity Score Matching
 
-The naive difference compares groups with different historical spending and engagement. To make a more comparable comparison, I use propensity score matching (PSM).
+Suppose our goal is to estimate ATT: the average effect of coupons on customers who actually received them. Several methods can help estimate this effect, including outcome regression, propensity score weighting, and matching. Here, I will use propensity score matching (PSM) as an example.
 
-I first estimate each customer’s probability of receiving a coupon using historical spending and pre-treatment engagement. I then match coupon recipients with non-recipients who have similar estimated probabilities.
-
-The initial target is ATT: the average coupon effect among actual coupon recipients. However, if some recipients cannot be matched, the estimate applies to the recipients retained in the matched sample.
+The idea of PSM is to find comparable customers who did not receive coupons and use their spending to approximate what coupon recipients would have spent without one.
 
 ### 4.1 Estimate propensity scores
 
