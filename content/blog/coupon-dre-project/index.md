@@ -233,7 +233,7 @@ The idea of PSM is to find comparable customers who did not receive coupons and 
 
    In this case, the average subsequent spending difference between matched coupon recipients and non-recipients estimates the coupon’s effect among the retained recipients.
 
-### 4.1 Estimate propensity scores
+### 4.1 Estimate Propensity Scores
 
 Because the coupon assignment mechanism in this simulation follows a logistic form, logistic regression is used to estimate propensity scores. In real-world applications, where the true assignment mechanism is unknown, logistic regression can serve as a starting point, with the model specification refined using subject-matter knowledge and matching diagnostics.
 
@@ -275,7 +275,65 @@ display(psm_data)
 
 10000 rows × 5 columns
 
-### 4.2 How to Assess Whether This PSM Model Is Good Enough
+### 4.2 Perform 1:1 Matching
+
+For each coupon recipient, I select the nearest available non-recipient on the **logit propensity score** scale. I use a caliper of **0.2 standard deviations of the estimated logit scores**, approximately **0.1693** in this run. This limits the permitted distance; it is an illustrative matching choice rather than a universal optimal setting.
+
+Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Recipients without an available control within the caliper remain unmatched. Matching order, caliper, and replacement choices can change the retained sample.
+
+```python
+# The decision function gives the logit of the estimated probability
+psm_data['ps_logit'] = ps_model.decision_function(psm_data[features])
+caliper = 0.2 * psm_data['ps_logit'].std(ddof=1)
+
+# 2. Match each recipient to the nearest available non-recipient
+# Use a fixed random order; each control is used at most once
+recipients = psm_data.loc[psm_data.coupon_assignment == 1]
+non_recipients = psm_data.loc[psm_data.coupon_assignment == 0]
+available_controls = non_recipients.index.tolist()
+pairs = []
+
+for recipient_id in recipients.sample(frac=1, random_state=42).index:
+    if not available_controls:
+        break
+    distances = (
+        psm_data.loc[available_controls, 'ps_logit']
+        - psm_data.loc[recipient_id, 'ps_logit']
+    ).abs()
+    control_id = distances.idxmin()
+    if distances.loc[control_id] <= caliper:
+        pairs.append((recipient_id, control_id))
+        available_controls.remove(control_id)
+
+pairs = pd.DataFrame(pairs, columns=['recipient_id', 'control_id'])
+if pairs.empty:
+    raise ValueError('No matches found. Review overlap and matching settings.')
+
+matched_recipients = psm_data.loc[pairs.recipient_id]
+matched_controls = psm_data.loc[pairs.control_id]
+
+# 3. Check retention and balance before looking at the outcome difference
+retention = pd.DataFrame({
+    'Group': ['Coupon recipients', 'Non-recipients'],
+    'Original': [len(recipients), len(non_recipients)],
+    'Matched': [len(pairs), len(pairs)]
+})
+retention['Unmatched'] = retention['Original'] - retention['Matched']
+display(retention)
+```
+
+#### Output
+
+| | Group | Original | Matched | Unmatched |
+|---|---|---:|---:|---:|
+| 0 | Coupon recipients | 4984 | 3500 | 1484 |
+| 1 | Non-recipients | 5016 | 3500 | 1516 |
+
+**Interpretation.** The procedure retains **3,500 pairs**, including approximately **70.2% of the original coupon recipients**. It excludes **1,484 recipients**. An unmatched recipient does not necessarily have no similar non-recipient in the original data; a suitable control may already have been used.
+
+Because some recipients are excluded, the estimate now targets the recipients retained in the matched sample. It should not automatically be generalized to all coupon recipients or all 10,000 customers.
+
+### 4.3 Assess Matching Quality
 
 The quality of the PSM analysis is assessed using four checks.
 
@@ -387,65 +445,7 @@ Check 1: Customer counts by propensity score range
 
 Matching ratio and replacement are separate choices. This analysis uses **1:1 matching without replacement**.
 
-### 4.3 Perform 1:1 matching
-
-For each coupon recipient, I select the nearest available non-recipient on the **logit propensity score** scale. I use a caliper of **0.2 standard deviations of the estimated logit scores**, approximately **0.1693** in this run. This limits the permitted distance; it is an illustrative matching choice rather than a universal optimal setting.
-
-Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Recipients without an available control within the caliper remain unmatched. Matching order, caliper, and replacement choices can change the retained sample.
-
-```python
-# The decision function gives the logit of the estimated probability
-psm_data['ps_logit'] = ps_model.decision_function(psm_data[features])
-caliper = 0.2 * psm_data['ps_logit'].std(ddof=1)
-
-# 2. Match each recipient to the nearest available non-recipient
-# Use a fixed random order; each control is used at most once
-recipients = psm_data.loc[psm_data.coupon_assignment == 1]
-non_recipients = psm_data.loc[psm_data.coupon_assignment == 0]
-available_controls = non_recipients.index.tolist()
-pairs = []
-
-for recipient_id in recipients.sample(frac=1, random_state=42).index:
-    if not available_controls:
-        break
-    distances = (
-        psm_data.loc[available_controls, 'ps_logit']
-        - psm_data.loc[recipient_id, 'ps_logit']
-    ).abs()
-    control_id = distances.idxmin()
-    if distances.loc[control_id] <= caliper:
-        pairs.append((recipient_id, control_id))
-        available_controls.remove(control_id)
-
-pairs = pd.DataFrame(pairs, columns=['recipient_id', 'control_id'])
-if pairs.empty:
-    raise ValueError('No matches found. Review overlap and matching settings.')
-
-matched_recipients = psm_data.loc[pairs.recipient_id]
-matched_controls = psm_data.loc[pairs.control_id]
-
-# 3. Check retention and balance before looking at the outcome difference
-retention = pd.DataFrame({
-    'Group': ['Coupon recipients', 'Non-recipients'],
-    'Original': [len(recipients), len(non_recipients)],
-    'Matched': [len(pairs), len(pairs)]
-})
-retention['Unmatched'] = retention['Original'] - retention['Matched']
-display(retention)
-```
-
-#### Output
-
-| | Group | Original | Matched | Unmatched |
-|---|---|---:|---:|---:|
-| 0 | Coupon recipients | 4984 | 3500 | 1484 |
-| 1 | Non-recipients | 5016 | 3500 | 1516 |
-
-**Interpretation.** The procedure retains **3,500 pairs**, including approximately **70.2% of the original coupon recipients**. It excludes **1,484 recipients**. An unmatched recipient does not necessarily have no similar non-recipient in the original data; a suitable control may already have been used.
-
-Because some recipients are excluded, the estimate now targets the recipients retained in the matched sample. It should not automatically be generalized to all coupon recipients or all 10,000 customers.
-
-### 4.4 Check covariate balance
+#### Check 3: Covariate Balance
 
 Matching must be evaluated using the covariates themselves, not just similarity in propensity scores. Here I compare matched means and standardized mean differences (SMDs) for `past_spend` and `activity`.
 
@@ -486,7 +486,7 @@ display(balance.round(3))
 
 This table checks mean balance only. A more complete assessment would also inspect distributions, variances, and relevant nonlinear terms or interactions. A small SMD is not proof that all confounding has been removed. If covariate balance remains poor, the matching design should be revised before interpreting the outcome comparison.
 
-### 4.5 Estimate the effect and compare the appropriate benchmark
+### 4.4 Estimate the effect and compare the appropriate benchmark
 
 For each matched pair, I subtract the non-recipient's spending from the recipient's spending, then average the differences. I convert the outcome columns to arrays so pandas does not align the different customer IDs.
 
