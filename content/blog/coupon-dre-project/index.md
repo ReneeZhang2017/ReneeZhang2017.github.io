@@ -235,7 +235,7 @@ The idea of PSM is to find comparable customers who did not receive coupons and 
 
 ### 4.1 Estimate propensity scores
 
-I use logistic regression to estimate the probability of receiving a coupon from historical spending and pre-treatment engagement. Subsequent spending is not used to fit the model or choose matches. The estimated scores are used for matching; the simulation's `true_ps` is not used.
+Because the coupon assignment mechanism in this simulation follows a logistic form, logistic regression is used to estimate propensity scores. In real-world applications, where the true assignment mechanism is unknown, logistic regression can serve as a starting point, with the model specification refined using subject-matter knowledge and matching diagnostics.
 
 #### Code
 
