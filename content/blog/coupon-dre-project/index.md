@@ -277,6 +277,14 @@ display(psm_data)
 
 ### 4.2 Perform 1:1 Matching
 
+**Matching options**
+
+- **1:1 without replacement:** Each treated observation is matched to one control, and each control can be used at most once.
+- **1:1 with replacement:** Each treated observation is matched to one control, but the same control can be reused for multiple treated observations.
+- **1:k matching:** Each treated observation is matched to k controls. This approach can be used with or without replacement.
+
+Matching ratio and replacement are separate choices. This analysis uses **1:1 matching without replacement**.
+
 For each coupon recipient, I select the nearest available non-recipient on the **logit propensity score** scale. I use a caliper of **0.2 standard deviations of the estimated logit scores**, approximately **0.1693** in this run. This limits the permitted distance; it is an illustrative matching choice rather than a universal optimal setting.
 
 Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Recipients without an available control within the caliper remain unmatched. Matching order, caliper, and replacement choices can change the retained sample.
@@ -436,14 +444,6 @@ Check 1: Customer counts by propensity score range
 | (0.8, 1.0] | 58 | 470 |
 
 **Interpretation：** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
-
-**Matching options**
-
-- **1:1 without replacement:** Each treated observation is matched to one control, and each control can be used at most once.
-- **1:1 with replacement:** Each treated observation is matched to one control, but the same control can be reused for multiple treated observations.
-- **1:k matching:** Each treated observation is matched to k controls. This approach can be used with or without replacement.
-
-Matching ratio and replacement are separate choices. This analysis uses **1:1 matching without replacement**.
 
 #### Check 3: Covariate Balance
 
