@@ -1,5 +1,5 @@
 ---
-title: "A Practical Guide to Basic Causal Inference Concepts - Do Coupons Increase Customer Spending?"
+title: "A Practical Guide to Causal Inference - Do Coupons Increase Customer Spending?"
 date: 2026-10-21
 draft: false
 categories: ["Causal Inference"]
@@ -181,7 +181,7 @@ display(
 | 0 | 84.869642 | 4.178030 | 83.325577 |
 | 1 | 114.072446 | 5.892657 | 128.515383 |
 
-**Interpretation.**
+**Interpretation:**
 
 **1. True ATE vs. True ATT: effects for different target populations.**
 
@@ -335,7 +335,7 @@ display(retention)
 | 0 | Coupon recipients | 4984 | 3500 | 1484 |
 | 1 | Non-recipients | 5016 | 3500 | 1516 |
 
-**Interpretation.** The procedure retains **3,500 pairs**, including approximately **70.2% of the original coupon recipients**. It excludes **1,484 recipients**. An unmatched recipient does not necessarily have no similar non-recipient in the original data; a suitable control may already have been used.
+**Interpretation:** The procedure retains **3,500 pairs**, including approximately **70.2% of the original coupon recipients**. It excludes **1,484 recipients**. An unmatched recipient does not necessarily have no similar non-recipient in the original data; a suitable control may already have been used.
 
 Because some recipients are excluded, the estimate now targets the recipients retained in the matched sample. It should not automatically be generalized to all coupon recipients or all 10,000 customers.
 
