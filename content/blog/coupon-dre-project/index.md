@@ -289,6 +289,8 @@ To find a suitable non-recipient for each recipient, this analysis uses **greedy
 
 A **caliper**, or maximum permitted matching distance, is set to **0.2 times the standard deviation of the estimated logit scores**, approximately **0.1693** in this run. If the nearest available control exceeds this distance, the recipient remains unmatched. This threshold is a starting point for the matching design; its suitability is assessed through the matching diagnostics that follow.
 
+#### Code
+
 ```python
 # Define the two groups before matching
 recipients = psm_data.loc[
