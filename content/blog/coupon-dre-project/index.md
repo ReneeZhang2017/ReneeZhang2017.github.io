@@ -430,7 +430,7 @@ display(pairs)
 
 **Interpretation:** The procedure retains **3,500 pairs**, including approximately **70.2% of the original coupon recipients**. It excludes **1,484 recipients**. An unmatched recipient does not necessarily have no similar non-recipient in the original data; a suitable control may already have been used.
 
-Because some recipients are excluded, the estimate now targets the recipients retained in the matched sample. It should not automatically be generalized to all coupon recipients or all 10,000 customers.
+Because some recipients are excluded, the estimate now targets the recipients retained in the matched sample.
 
 ### 4.3 Assess Matching Quality
 
