@@ -290,44 +290,84 @@ To find a suitable non-recipient for each recipient, this analysis uses **greedy
 A **caliper**, or maximum permitted matching distance, is set to **0.2 times the standard deviation of the estimated logit scores**, approximately **0.1693** in this run. If the nearest available control exceeds this distance, the recipient remains unmatched. This threshold is a starting point for the matching design; its suitability is assessed through the matching diagnostics that follow.
 
 ```python
-# The decision function gives the logit of the estimated probability
-psm_data['ps_logit'] = ps_model.decision_function(psm_data[features])
+# Define the two groups before matching
+recipients = psm_data.loc[
+    psm_data['coupon_assignment'] == 1
+].copy()
+
+non_recipients = psm_data.loc[
+    psm_data['coupon_assignment'] == 0
+].copy()
+
+# ============================================================
+# Perform 1:1 nearest-neighbor matching without replacement
+# ============================================================
+
+# Match on the logit of the estimated propensity score
+psm_data['ps_logit'] = ps_model.decision_function(
+    psm_data[features]
+)
+
+# Illustrative caliper: 0.2 SD of logit propensity scores
 caliper = 0.2 * psm_data['ps_logit'].std(ddof=1)
 
-# 2. Match each recipient to the nearest available non-recipient
-# Use a fixed random order; each control is used at most once
-recipients = psm_data.loc[psm_data.coupon_assignment == 1]
-non_recipients = psm_data.loc[psm_data.coupon_assignment == 0]
 available_controls = non_recipients.index.tolist()
-pairs = []
+pair_rows = []
 
-for recipient_id in recipients.sample(frac=1, random_state=42).index:
+# A fixed random order makes the procedure reproducible
+recipient_order = recipients.sample(
+    frac=1,
+    random_state=42
+).index
+
+for recipient_id in recipient_order:
+
     if not available_controls:
         break
+
     distances = (
         psm_data.loc[available_controls, 'ps_logit']
         - psm_data.loc[recipient_id, 'ps_logit']
     ).abs()
+
     control_id = distances.idxmin()
-    if distances.loc[control_id] <= caliper:
-        pairs.append((recipient_id, control_id))
+    distance = distances.loc[control_id]
+
+    if distance <= caliper:
+        pair_rows.append({
+            'recipient_id': recipient_id,
+            'control_id': control_id,
+            'logit_distance': distance
+        })
+
+        # Each control can be used only once
         available_controls.remove(control_id)
 
-pairs = pd.DataFrame(pairs, columns=['recipient_id', 'control_id'])
+pairs = pd.DataFrame(
+    pair_rows,
+    columns=['recipient_id', 'control_id', 'logit_distance']
+)
+
 if pairs.empty:
-    raise ValueError('No matches found. Review overlap and matching settings.')
+    raise ValueError(
+        'No matches found. Review overlap and matching settings.'
+    )
 
-matched_recipients = psm_data.loc[pairs.recipient_id]
-matched_controls = psm_data.loc[pairs.control_id]
+matched_recipients = psm_data.loc[
+    pairs['recipient_id']
+].copy()
 
-# 3. Check retention and balance before looking at the outcome difference
-retention = pd.DataFrame({
-    'Group': ['Coupon recipients', 'Non-recipients'],
-    'Original': [len(recipients), len(non_recipients)],
-    'Matched': [len(pairs), len(pairs)]
-})
-retention['Unmatched'] = retention['Original'] - retention['Matched']
-display(retention)
+matched_controls = psm_data.loc[
+    pairs['control_id']
+].copy()
+
+assert pairs['recipient_id'].is_unique
+assert pairs['control_id'].is_unique
+
+display(matched_recipients)
+display(matched_controls)
+
+display(pairs)
 ```
 
 #### Output
