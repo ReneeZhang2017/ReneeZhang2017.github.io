@@ -283,9 +283,17 @@ display(psm_data)
 - 1:1 with replacement
 - 1:k matching
 
-For each coupon recipient, I select the nearest available non-recipient on the **logit propensity score** scale. I use a caliper of **0.2 standard deviations of the estimated logit scores**, approximately **0.1693** in this run. This limits the permitted distance; it is an illustrative matching choice rather than a universal optimal setting.
+To find a suitable non-recipient for each recipient, this analysis uses **greedy nearest-neighbor matching**. “Greedy” means choosing the best available option at each step, then moving on without revisiting earlier decisions. Here, the best available option is the unused control with the smallest absolute difference in **logit propensity scores**.
 
-Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Recipients without an available control within the caliper remain unmatched. Matching order, caliper, and replacement choices can change the retained sample.
+The **logit propensity score** is calculated as:
+
+**logit(p̂ᵢ) = ln(p̂ᵢ / (1 − p̂ᵢ))**
+
+where p̂ᵢ is customer i’s estimated probability of receiving a coupon, and ln denotes the natural logarithm. The matching distance is the absolute difference between the recipient’s and non-recipient’s logit propensity scores.
+
+A **caliper**, or maximum permitted matching distance, is set to **0.2 times the standard deviation of the estimated logit scores**, approximately **0.1693** in this run. If the nearest available control exceeds this distance, the recipient remains unmatched. This threshold is a starting point for the matching design; its suitability is assessed through the matching diagnostics that follow.
+
+Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Matching order, caliper, and replacement choices can change the retained sample.
 
 ```python
 # The decision function gives the logit of the estimated probability
