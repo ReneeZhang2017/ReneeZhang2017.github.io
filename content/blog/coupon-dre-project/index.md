@@ -1,5 +1,5 @@
 ---
-title: "A Practical Guide to Causal Inference-Do Coupons Increase Customer Spending?"
+title: "A Practical Guide to Basic Causal Inference Concepts - Do Coupons Increase Customer Spending?"
 date: 2026-10-21
 draft: false
 categories: ["Causal Inference"]
