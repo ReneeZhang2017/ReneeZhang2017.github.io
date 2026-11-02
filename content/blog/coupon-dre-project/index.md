@@ -279,7 +279,7 @@ display(psm_data)
 
 **Matching options**
 
-- **1:1 without replacement** (This analysis will use **1:1 matching without replacement**.)
+- **1:1 without replacement** (This analysis will use 1:1 matching without replacement.)
 - **1:1 with replacement**
 - **1:k matching**
 
