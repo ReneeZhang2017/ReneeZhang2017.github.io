@@ -289,8 +289,6 @@ To find a suitable non-recipient for each recipient, this analysis uses **greedy
 
 A **caliper**, or maximum permitted matching distance, is set to **0.2 times the standard deviation of the estimated logit scores**, approximately **0.1693** in this run. If the nearest available control exceeds this distance, the recipient remains unmatched. This threshold is a starting point for the matching design; its suitability is assessed through the matching diagnostics that follow.
 
-Matching is **without replacement**: each control is used at most once. Recipients are processed in a fixed random order (`random_state=42`). Matching order, caliper, and replacement choices can change the retained sample.
-
 ```python
 # The decision function gives the logit of the estimated probability
 psm_data['ps_logit'] = ps_model.decision_function(psm_data[features])
