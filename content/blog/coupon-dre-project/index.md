@@ -343,6 +343,40 @@ plt.show()
 
 ![Propensity score overlap before matching](overlap-before-matching.png)
 
+#### Code
+
+```python
+# Count customers in each propensity score range
+score_bins = pd.cut(
+    psm_data['propensity_score'],
+    bins=np.linspace(0, 1, 6),
+    include_lowest=True
+)
+
+overlap_counts = pd.crosstab(
+    score_bins,
+    psm_data['coupon_assignment'],
+    dropna=False
+).reindex(columns=[0, 1], fill_value=0)
+
+overlap_counts.columns = ['No coupon', 'Coupon']
+
+print('Check 1: Customer counts by propensity score range')
+display(overlap_counts)
+```
+
+#### Output
+
+Check 1: Customer counts by propensity score range
+
+| propensity_score | No coupon | Coupon |
+|---|---:|---:|
+| (-0.001, 0.2] | 475 | 102 |
+| (0.2, 0.4] | 1828 | 827 |
+| (0.4, 0.6] | 1822 | 1778 |
+| (0.6, 0.8] | 833 | 1807 |
+| (0.8, 1.0] | 58 | 470 |
+
 **Interpretation.** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
 
 ### 4.3 Perform 1:1 matching
