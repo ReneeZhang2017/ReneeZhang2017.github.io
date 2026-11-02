@@ -237,6 +237,8 @@ The idea of PSM is to find comparable customers who did not receive coupons and 
 
 I use logistic regression to estimate the probability of receiving a coupon from historical spending and pre-treatment engagement. Subsequent spending is not used to fit the model or choose matches. The estimated scores are used for matching; the simulation's `true_ps` is not used.
 
+#### Code
+
 ```python
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
