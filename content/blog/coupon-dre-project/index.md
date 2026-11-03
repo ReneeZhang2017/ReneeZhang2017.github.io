@@ -760,11 +760,13 @@ display(psm_comparison.round(2))
 | 2 | True effect: matched coupon recipients | 20.05 |
 | 3 | PSM estimate: matched coupon recipients | 20.84 |
 
-**Interpretation.** PSM estimates an average spending increase of approximately **$20.84 among matched coupon recipients**. The corresponding true average effect is **$20.05**. Matching substantially reduces the discrepancy seen in the original naive difference of **$45.19**, but the point estimate still differs from its simulation benchmark by approximately **$0.79**.
+**Interpretation：**
 
-The true ATT for all original coupon recipients is **$21.79**. Its difference from the matched recipients' true effect reflects a change in the target population. Therefore, the PSM estimate should be compared with **$20.05**, not treated as an estimate of the full-population ATE or automatically as an estimate of ATT for every original recipient.
+1. **Matching changes the target population.** The original goal is to estimate ATT for all coupon recipients, whose true average effect is **$21.79**. However, matching retains only **70.22%** of recipients; those excluded have higher average historical spending and engagement. The retained recipients have a lower true average effect of **$20.05**, and the PSM estimate for this group is **$20.84**. The change in target population and the remaining estimation error are therefore separate issues.
 
-This section reports a point estimate and descriptive diagnostics, not a confidence interval. A causal interpretation requires sufficient overlap for the retained population, consistency and no interference, and no unmeasured confounding given the selected pre-treatment variables. These conditions follow from the way this simulation was constructed; in a real study, they would require substantive justification.
+2. **PSM substantially improves on the naive comparison.** The estimate of **$20.84** is much closer to the matched recipients’ true effect of **$20.05** than the naive difference of **$45.19**, although it targets a smaller population.
+
+3. **Next step: improve recipient retention.** Try **matching with replacement** so that suitable controls can be reused, especially in high-score regions where controls are scarce. Then reassess matching distance, covariate balance, recipient retention, and control reuse before estimating the effect again.
 
 ### References for matching and diagnostics
 
