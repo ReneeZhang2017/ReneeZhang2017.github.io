@@ -663,6 +663,65 @@ display(balance.round(3))
 
 This table checks mean balance only. A more complete assessment would also inspect distributions, variances, and relevant nonlinear terms or interactions. A small SMD is not proof that all confounding has been removed. If covariate balance remains poor, the matching design should be revised before interpreting the outcome comparison.
 
+#### Check 4: Sample Retention and Target Population
+
+Sample retention describes how many observations remain after matching. Comparing retained and excluded recipients helps identify which customers the resulting estimate represents. There is no universal minimum retention rate: the number retained should be considered together with matching quality and the target population.
+
+#### Code
+
+```python
+# ============================================================
+# Check 4: Sample retention and target population
+# ============================================================
+
+# Identify recipients who were not retained in the matched sample
+unmatched_recipients = recipients.loc[
+    ~recipients.index.isin(pairs['recipient_id'])
+].copy()
+
+retention = pd.DataFrame({
+    'Group': ['Coupon recipients', 'Non-recipients'],
+    'Original': [len(recipients), len(non_recipients)],
+    'Matched': [len(matched_recipients), len(matched_controls)]
+})
+retention['Unmatched'] = retention['Original'] - retention['Matched']
+retention['Retained (%)'] = (
+    100 * retention['Matched'] / retention['Original']
+)
+
+display(retention.round(2))
+
+# Compare retained and excluded recipients using pre-treatment information
+profile_columns = ['past_spend', 'activity', 'propensity_score']
+recipient_profiles = pd.DataFrame({
+    'All recipients': recipients[profile_columns].mean(),
+    'Matched recipients': matched_recipients[profile_columns].mean(),
+    'Unmatched recipients': unmatched_recipients[profile_columns].mean()
+}).T
+recipient_profiles.index.name = 'Recipient group'
+
+display(recipient_profiles.round(3))
+```
+
+#### Output
+
+| | Group | Original | Matched | Unmatched | Retained (%) |
+|---|---|---:|---:|---:|---:|
+| 0 | Coupon recipients | 4984 | 3500 | 1484 | 70.22 |
+| 1 | Non-recipients | 5016 | 3500 | 1516 | 69.78 |
+
+| Recipient group | past_spend | activity | propensity_score |
+|---|---:|---:|---:|
+| All recipients | 114.072 | 5.893 | 0.568 |
+| Matched recipients | 99.626 | 5.025 | 0.499 |
+| Unmatched recipients | 148.145 | 7.940 | 0.733 |
+
+**Interpretation：** Matching retains **3,500 of the 4,984 coupon recipients (70.22%)**, leaving **1,484 recipients unmatched**. Because matching is 1:1 without replacement, the matched sample also contains **3,500 distinct non-recipients**.
+
+The unmatched recipients have higher average historical spending (**148.145 vs. 99.626**), engagement (**7.940 vs. 5.025**), and estimated propensity scores (**0.733 vs. 0.499**) than the matched recipients. This indicates that the retained recipients differ systematically from those excluded, especially among customers with a higher estimated probability of receiving a coupon.
+
+The subsequent effect estimate therefore targets the **retained coupon recipients**. For simulation evaluation, the appropriate benchmark is the true average effect for those same recipients. The retention percentage alone does not establish matching quality; it complements the distance and balance checks above.
+
 ### 4.4 Estimate the effect and compare the appropriate benchmark
 
 For each matched pair, I subtract the non-recipient's spending from the recipient's spending, then average the differences. I convert the outcome columns to arrays so pandas does not align the different customer IDs.
