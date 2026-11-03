@@ -612,9 +612,9 @@ plt.show()
 
 #### Check 3: Covariate Balance
 
-Matching must be evaluated using the covariates themselves, not just similarity in propensity scores. Here I compare matched means and standardized mean differences (SMDs) for `past_spend` and `activity`.
+Similar propensity scores do not guarantee that the matched groups have similar pre-treatment characteristics. Covariate balance is checked to assess whether matching has reduced these differences.
 
-For each variable, I use the original pooled standard deviation as a fixed denominator for both the before- and after-matching SMDs. Values closer to zero indicate closer means.
+The standardized mean difference (**SMD**) measures the difference between the two groups’ means relative to their variability. An absolute SMD (**|SMD|**) below **0.1** is commonly used as a rule of thumb for acceptable mean balance; values closer to zero indicate better mean balance.
 
 ```python
 balance_rows = []
