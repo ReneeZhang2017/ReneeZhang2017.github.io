@@ -711,7 +711,10 @@ display(recipient_profiles.round(3))
 
 The unmatched recipients have higher average historical spending (**148.145 vs. 99.626**), engagement (**7.940 vs. 5.025**), and estimated propensity scores (**0.733 vs. 0.499**) than the matched recipients. This indicates that the retained recipients differ systematically from those excluded, especially among customers with a higher estimated probability of receiving a coupon.
 
-The subsequent effect estimate therefore targets the **retained coupon recipients**. For simulation evaluation, the appropriate benchmark is the true average effect for those same recipients. The retention percentage alone does not establish matching quality; it complements the distance and balance checks above.
+| Goal | What to do |
+|---|---|
+| Estimate the **average effect among retained recipients** | Continue evaluating the current matching design and clearly define the target population as the retained recipients. |
+| Estimate **ATT for all original recipients** | Explore ways to retain more recipients, such as matching with replacement, then reassess matching quality and whether the matched sample covers the full target population. |
 
 ### 4.4 Estimate the effect and compare the appropriate benchmark
 
