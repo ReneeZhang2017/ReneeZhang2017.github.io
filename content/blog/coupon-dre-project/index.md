@@ -762,11 +762,11 @@ display(psm_comparison.round(2))
 
 **Interpretation：**
 
-1. **Matching changes the target population.** The original goal is to estimate ATT for all coupon recipients, whose true average effect is **$21.79**. However, matching retains only **70.22%** of recipients; those excluded have higher average historical spending and engagement. The retained recipients have a lower true average effect of **$20.05**, and the PSM estimate for this group is **$20.84**. The change in target population and the remaining estimation error are therefore separate issues.
+1. Matching changes the target population. The original goal is to estimate ATT for all coupon recipients, whose true average effect is $21.79. However, matching retains only 70.22% of recipients; those excluded have higher average historical spending and engagement. The retained recipients have a lower true average effect of $20.05, and the PSM estimate for this group is $20.84. The change in target population and the remaining estimation error are therefore separate issues.
 
-2. **PSM substantially improves on the naive comparison.** The estimate of **$20.84** is much closer to the matched recipients’ true effect of **$20.05** than the naive difference of **$45.19**, although it targets a smaller population.
+2. PSM substantially improves on the naive comparison. The estimate of $20.84 is much closer to the matched recipients’ true effect of $20.05 than the naive difference of $45.19, although it targets a smaller population.
 
-3. **Next step: improve recipient retention.** Try **matching with replacement** so that suitable controls can be reused, especially in high-score regions where controls are scarce. Then reassess matching distance, covariate balance, recipient retention, and control reuse before estimating the effect again.
+3. Next step: improve recipient retention. Try matching with replacement so that suitable controls can be reused, especially in high-score regions where controls are scarce. Then reassess matching distance, covariate balance, recipient retention, and control reuse before estimating the effect again.
 
 ### References for matching and diagnostics
 
