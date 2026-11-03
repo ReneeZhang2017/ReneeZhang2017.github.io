@@ -292,7 +292,11 @@ A **caliper**, or maximum permitted matching distance, is set to **0.2 times the
 #### Code
 
 ```python
-# Define the two groups before matching
+# Define the features and customer groups before matching
+features = ['past_spend', 'activity']
+
+assert psm_data.index.is_unique, "Each customer must have a unique index."
+
 recipients = psm_data.loc[
     psm_data['coupon_assignment'] == 1
 ].copy()
@@ -449,19 +453,6 @@ The quality of the PSM analysis is assessed using four checks.
 
 ```python
 import matplotlib.pyplot as plt
-
-features = ['past_spend', 'activity']
-
-assert psm_data.index.is_unique, "Each customer must have a unique index."
-
-recipients = psm_data.loc[
-    psm_data['coupon_assignment'] == 1
-].copy()
-
-non_recipients = psm_data.loc[
-    psm_data['coupon_assignment'] == 0
-].copy()
-
 
 # ============================================================
 # Check 1: Overlap — before matching
