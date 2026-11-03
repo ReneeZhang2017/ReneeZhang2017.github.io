@@ -536,6 +536,80 @@ Check 1: Customer counts by propensity score range
 
 **Interpretation：** Both groups appear in every checked range, but the highest-score range has only **58 non-recipients versus 470 recipients**. Even with overall overlap, some recipients may not have a sufficiently close, unused control under 1:1 matching without replacement.
 
+#### Check 2: Matching Distance
+
+Matching distance measures how close the selected recipient–control pairs are on the logit propensity score scale. The summary below describes the typical distance, the upper end of the distribution, and whether any pairs exceed the caliper.
+
+#### Code
+
+```python
+# ============================================================
+# Check 2: Matching distance — after matching
+# ============================================================
+import matplotlib.pyplot as plt
+
+pair_distances = pairs['logit_distance']
+outside_caliper = pair_distances.gt(caliper).sum()
+
+distance_summary = pd.DataFrame({
+    'Statistic': [
+        'Matched pairs',
+        'Median logit distance',
+        '90th percentile logit distance',
+        'Maximum logit distance',
+        'Caliper',
+        'Pairs exceeding the caliper'
+    ],
+    'Value': [
+        str(len(pairs)),
+        f"{pair_distances.median():.6f}",
+        f"{pair_distances.quantile(0.90):.6f}",
+        f"{pair_distances.max():.6f}",
+        f"{caliper:.6f}",
+        str(outside_caliper)
+    ]
+})
+
+display(distance_summary)
+
+plt.figure(figsize=(8, 4))
+plt.hist(
+    pair_distances,
+    bins=np.linspace(0, max(caliper, pair_distances.max()), 31),
+    color='steelblue',
+    edgecolor='white'
+)
+plt.axvline(
+    caliper,
+    color='darkorange',
+    linestyle='--',
+    label=f'Caliper = {caliper:.4f}'
+)
+plt.xlabel('Absolute difference in logit propensity scores')
+plt.ylabel('Number of matched pairs')
+plt.title('Matching distances after 1:1 matching')
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+#### Output
+
+| | Statistic | Value |
+|---|---|---:|
+| 0 | Matched pairs | 3500 |
+| 1 | Median logit distance | 0.000485 |
+| 2 | 90th percentile logit distance | 0.013117 |
+| 3 | Maximum logit distance | 0.168853 |
+| 4 | Caliper | 0.169311 |
+| 5 | Pairs exceeding the caliper | 0 |
+
+![Distribution of within-pair logit propensity score distances, with the caliper marked by a dashed line.](matching-distances.png)
+
+**Interpretation:** The median matching distance is approximately **0.000485**, and **90% of pairs have distances no greater than 0.013117**. Most pairs are therefore close on the selected matching scale. The maximum distance is **0.168853**, just below the caliper of **0.169311**.
+
+**No pairs exceed the caliper**, as required by the matching algorithm. This confirms that the selected pairs satisfy the distance rule; Check 3 assesses whether the matched groups are also balanced on historical spending and engagement.
+
 #### Check 3: Covariate Balance
 
 Matching must be evaluated using the covariates themselves, not just similarity in propensity scores. Here I compare matched means and standardized mean differences (SMDs) for `past_spend` and `activity`.
