@@ -616,6 +616,12 @@ Similar propensity scores do not guarantee that the matched groups have similar 
 
 The standardized mean difference (**SMD**) measures the difference between the two groups’ means relative to their variability. An absolute SMD (**|SMD|**) below **0.1** is commonly used as a rule of thumb for acceptable mean balance; values closer to zero indicate better mean balance.
 
+The SMD used in this analysis is calculated as:
+
+![SMD equals the difference between the treatment and control means divided by the square root of the average of their pre-matching variances.](smd-formula.svg)
+
+Here, X̄_T and X̄_C are the treatment and control group means of a covariate. The terms s²_T,before and s²_C,before are its variances in the original groups before matching. The denominator is the **original pooled standard deviation**, kept fixed for both the before- and after-matching calculations; the numerator uses the group means for the corresponding sample.
+
 ```python
 balance_rows = []
 for feature in features:
