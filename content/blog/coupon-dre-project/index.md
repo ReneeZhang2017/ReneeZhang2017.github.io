@@ -718,9 +718,9 @@ The unmatched recipients have higher average historical spending (**148.145 vs. 
 
 ### 4.4 Estimate the Treatment Effect
 
-For each matched pair, I subtract the non-recipient's spending from the recipient's spending, then average the differences. I convert the outcome columns to arrays so pandas does not align the different customer IDs.
+For each matched pair, the non-recipient’s spending is subtracted from the recipient’s spending. These differences are then averaged to estimate the effect among matched recipients.
 
-Because this is simulated data, I can also calculate the true average coupon effect for the **same retained recipients**. True effects are used only for evaluation, never for deciding the matching rules or choosing pairs.
+Because this dataset is simulated, the true average coupon effect can also be calculated for the **same retained recipients**. True effects are used only for evaluation, never for deciding the matching rules or choosing pairs.
 
 ```python
 # 4. Estimate the average effect among retained recipients
