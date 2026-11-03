@@ -622,6 +622,8 @@ The SMD used in this analysis is calculated as:
 
 Here, X̄_T and X̄_C are the treatment and control group means of a covariate. The terms s²_T,before and s²_C,before are its variances in the original groups before matching. The denominator is the **original pooled standard deviation**, kept fixed for both the before- and after-matching calculations; the numerator uses the group means for the corresponding sample.
 
+#### Code
+
 ```python
 balance_rows = []
 for feature in features:
