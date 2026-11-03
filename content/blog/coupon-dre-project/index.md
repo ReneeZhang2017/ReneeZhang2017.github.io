@@ -716,7 +716,7 @@ The unmatched recipients have higher average historical spending (**148.145 vs. 
 | Estimate the **average effect among retained recipients** | Continue evaluating the current matching design and clearly define the target population as the retained recipients. |
 | Estimate **ATT for all original recipients** | Explore ways to retain more recipients, such as matching with replacement, then reassess matching quality and whether the matched sample covers the full target population. |
 
-### 4.4 Estimate the effect and compare the appropriate benchmark
+### 4.4 Estimate the Treatment Effect
 
 For each matched pair, I subtract the non-recipient's spending from the recipient's spending, then average the differences. I convert the outcome columns to arrays so pandas does not align the different customer IDs.
 
