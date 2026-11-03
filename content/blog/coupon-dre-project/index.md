@@ -620,7 +620,11 @@ The SMD used in this analysis is calculated as:
 
 ![SMD equals the difference between the treatment and control means divided by the square root of the average of their pre-matching variances.](smd-formula.svg)
 
-Here, X̄_T and X̄_C are the treatment and control group means of a covariate. The terms s²_T,before and s²_C,before are its variances in the original groups before matching. The denominator is the **original pooled standard deviation**, kept fixed for both the before- and after-matching calculations; the numerator uses the group means for the corresponding sample.
+where:
+
+- **X̄ₜ and X̄꜀:** The means of a covariate in the treatment and control groups, respectively.
+- **s²ₜ,before and s²꜀,before:** The variances of that covariate in the treatment and control groups **before matching**.
+- The denominator is the **pooled standard deviation** of the original two groups and remains fixed before and after matching. The numerator uses the group means before or after matching, respectively.
 
 #### Code
 
