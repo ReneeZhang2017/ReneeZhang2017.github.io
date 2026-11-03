@@ -659,7 +659,7 @@ display(balance.round(3))
 | 0 | past_spend | 99.626 | 98.840 | 0.524 | 0.014 |
 | 1 | activity | 5.025 | 5.029 | 0.565 | -0.001 |
 
-**Interpretation.** The absolute SMDs fall from approximately **0.524 to 0.014** for historical spending and **0.565 to 0.001** for engagement. These observed means are much closer after matching.
+**Interpretation：** The absolute SMDs fall from approximately **0.524 to 0.014** for historical spending and **0.565 to 0.001** for engagement. These observed means are much closer after matching.
 
 This table checks mean balance only. A more complete assessment would also inspect distributions, variances, and relevant nonlinear terms or interactions. A small SMD is not proof that all confounding has been removed. If covariate balance remains poor, the matching design should be revised before interpreting the outcome comparison.
 
