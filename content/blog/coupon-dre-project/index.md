@@ -13,7 +13,8 @@ description: "A step-by-step causal inference project using simulated coupon dat
 1. [Business Context](#1-Business-Context)
 2. [Generate the simulated data](#2-generate-the-simulated-data)
 3. [True ATE vs. True ATT vs. Naive Difference](#3-true-ate-vs-true-att-vs-naive-difference)
-4. [Adjust for Selection Bias with Propensity Score Matching](#4-adjust-for-selection-bias-with-propensity-score-matching)
+4. [Estimate ATT: Adjust for Selection Bias with Propensity Score Matching](#4-adjust-for-selection-bias-with-propensity-score-matching)
+5. [Estimate ATE: From Outcome Regression and IPW to AIPW](#5-from-outcome-regression-and-IPW-to-AIPW)
 
 
 ## 1. Business Context
@@ -199,7 +200,7 @@ Coupon recipients already had higher historical spending (**114.07 vs. 84.87**) 
 
 As a result, the naive difference mixes the coupon’s causal effect with pre-existing differences between the groups. It overstates both ATE and ATT in this simulation.
 
-## 4. Adjust for Selection Bias with Propensity Score Matching
+## 4. Estimate ATT: Adjust for Selection Bias with Propensity Score Matching
 
 Suppose our goal is to estimate ATT: the average effect of coupons on customers who actually received them. Several methods can help estimate this effect, including outcome regression, propensity score weighting, and matching. Here, I will use propensity score matching (PSM) as an example.
 
@@ -767,6 +768,8 @@ display(psm_comparison.round(2))
 2. PSM substantially improves on the naive comparison. The estimate of $20.84 is much closer to the matched recipients’ true effect of $20.05 than the naive difference of $45.19, although it targets a smaller population.
 
 3. Next step: improve recipient retention. Try matching with replacement so that suitable controls can be reused, especially in high-score regions where controls are scarce. Then reassess matching distance, covariate balance, recipient retention, and control reuse before estimating the effect again.
+
+## 5. Estimate ATE: From Outcome Regression and IPW to AIPW
 
 ### References for matching and diagnostics
 
