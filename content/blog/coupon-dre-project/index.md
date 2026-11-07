@@ -769,9 +769,29 @@ display(psm_comparison.round(2))
 
 3. Next step: improve recipient retention. Try matching with replacement so that suitable controls can be reused, especially in high-score regions where controls are scarce. Then reassess matching distance, covariate balance, recipient retention, and control reuse before estimating the effect again.
 
-## 5. Estimate ATE: From Outcome Regression and IPW to AIPW
+## 5. Estimate ATE: From Outcome Regression and IPW to AIPW {#5-from-outcome-regression-and-IPW-to-AIPW}
 
-To be continued
+In Step 4, we estimated the coupon effect among the recipients retained after matching. We now shift our focus to **all 10,000 customers**, including both coupon recipients and non-recipients.
+
+Our goal is to estimate the **Average Treatment Effect (ATE)**:
+
+> For these same 10,000 customers, how much higher would average subsequent spending be if everyone received a coupon compared with if no one received one?
+
+The challenge is that we observe only one outcome for each customer: their spending either with or without a coupon. We therefore need a way to estimate the missing counterfactual outcomes* while accounting for differences in historical spending and engagement.
+
+Several methods can estimate ATE. Here, we consider three:
+
+| Method | Main idea |
+|---|---|
+| **Outcome Regression** | Predict each customer’s spending with and without a coupon, then average the predicted differences across all customers. |
+| **Inverse Probability Weighting (IPW)** | Weight customers using their estimated probabilities of receiving their observed treatment, so each group represents the full customer population. |
+| **Augmented Inverse Probability Weighting (AIPW)** | Combine outcome predictions with a propensity-weighted correction based on observed prediction errors. |
+
+In this section, we use **AIPW, a doubly robust estimator**, to estimate ATE. To understand how it works, we first build the outcome regression and IPW estimates separately, then show how AIPW combines their components.
+
+All three approaches rely on causal assumptions, including adequate overlap and no unmeasured confounding. AIPW’s additional advantage is **double robustness**: under these assumptions and standard regularity conditions, it is consistent if either the propensity score model or the outcome models are correctly specified.
+
+<p><small>* <strong>Counterfactual outcomes</strong> are the outcomes that would have occurred under the treatment condition a customer did not actually experience. For a customer who received a coupon, this means what they would have spent without one; for a customer who did not receive a coupon, it means what they would have spent with one. These outcomes are not directly observed.</small></p>
 
 ### References for matching and diagnostics
 
