@@ -791,7 +791,9 @@ In this section, we use **AIPW, a doubly robust estimator**, to estimate ATE. To
 
 All three approaches rely on causal assumptions, including adequate overlap and no unmeasured confounding. AIPW’s additional advantage is **double robustness**: under these assumptions and standard regularity conditions, it is consistent if either the propensity score model or the outcome models are correctly specified.
 
-<p><small>* <strong>Counterfactual outcomes</strong> are the outcomes that would have occurred under the treatment condition a customer did not actually experience. For a customer who received a coupon, this means what they would have spent without one; for a customer who did not receive a coupon, it means what they would have spent with one. These outcomes are not directly observed.</small></p>
+{{< small-note >}}
+\* **Counterfactual outcomes** are the outcomes that would have occurred under the treatment condition a customer did not actually experience. For a customer who received a coupon, this means what they would have spent without one; for a customer who did not receive a coupon, it means what they would have spent with one. These outcomes are not directly observed.
+{{< /small-note >}}
 
 ### References for matching and diagnostics
 
