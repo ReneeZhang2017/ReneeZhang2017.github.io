@@ -795,6 +795,141 @@ All three approaches rely on causal assumptions, including adequate overlap and 
 \* **Counterfactual outcomes** are the outcomes that would have occurred under the treatment condition a customer did not actually experience. For a customer who received a coupon, this means what they would have spent without one; for a customer who did not receive a coupon, it means what they would have spent with one. These outcomes are not directly observed.
 {{< /small-note >}}
 
+### 5.1 Estimate ATE with Outcome Regression
+
+We use two models to predict customer spending: one predicts expected spending **without a coupon**, and the other predicts expected spending **with a coupon**. Both models use historical spending and pre-treatment engagement as inputs.
+
+The idea is to estimate two expected outcomes for each customer:
+
+- How much would this customer be expected to spend **with a coupon**?
+- How much would this customer be expected to spend **without a coupon**?
+
+We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called **outcome regression**.
+
+#### Train two outcome models
+
+One way to implement outcome regression is to fit a separate model for each treatment group:
+
+| Model | Training data | Inputs | Target |
+|---|---|---|---|
+| **Model 0: No coupon** | Customers who did not receive a coupon | Historical spending and pre-treatment engagement | Subsequent spending |
+| **Model 1: Coupon** | Customers who received a coupon | Historical spending and pre-treatment engagement | Subsequent spending |
+
+Both models use only **pre-treatment characteristics** as inputs. Subsequent spending is the outcome we want to predict.
+
+Here, we use **linear regression** for both models. This is suitable for our simulation because expected spending is a linear function of historical spending and engagement within each treatment group. In real applications, the relationship is unknown, so model choice should be supported by subject-matter knowledge and model diagnostics.
+
+#### Predict both outcomes for every customer
+
+After training, we use **both models to predict spending for every customer**, regardless of whether they actually received a coupon.
+
+For example, consider a customer who received a coupon:
+
+- Model 1 predicts their expected spending with a coupon.
+- Model 0 predicts their expected spending without a coupon—the counterfactual condition.
+
+For a customer who did not receive a coupon, Model 1 provides the prediction for the counterfactual condition instead.
+
+These are predictions of **expected spending given the observed characteristics**. They do not reveal exactly what an individual customer would have spent in the unobserved condition.
+
+#### Average the predicted differences
+
+Let **Xᵢ** represent customer i’s historical spending and pre-treatment engagement. Define:
+
+- **m̂₁(Xᵢ):** predicted expected spending with a coupon.
+- **m̂₀(Xᵢ):** predicted expected spending without a coupon.
+
+The outcome regression estimate is the average predicted difference:
+
+```text
+ATE_OR = (1 / N) × Σᵢ [m̂₁(Xᵢ) − m̂₀(Xᵢ)]
+```
+
+Here, **N = 10,000**. **Both predictions are averaged over the same full customer population**, which aligns the estimate with our ATE question.
+
+#### Generate predictions with cross-fitting
+
+If we train and predict on the same observations, the predictions can reflect overfitting. To keep each customer’s outcome out of the models used to predict for that customer, we use **five-fold cross-fitting**:
+
+1. Split the customers into five folds.
+2. Hold out one fold and train both outcome models using the other four folds, separating recipients and non-recipients within the training data.
+3. Use both models to predict for every customer in the held-out fold.
+4. Repeat until every customer has two predictions.
+
+Each customer is therefore predicted by models that did not use that customer’s data for training.
+
+#### Code
+
+```python
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import StratifiedKFold
+
+# Return to the full dataset, rather than the matched sample
+features = ['past_spend', 'activity']
+
+X = df[features]
+T = df['coupon_assignment'].to_numpy()
+Y = df['subsequent_spending'].to_numpy()
+
+# Store held-out predictions in the original row order
+m0_hat = np.full(len(df), np.nan)
+m1_hat = np.full(len(df), np.nan)
+
+# Stratification keeps treatment proportions similar across folds
+folds = StratifiedKFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42
+)
+
+for train_idx, test_idx in folds.split(X, T):
+
+    # Separate the training customers by coupon assignment
+    control_train_idx = train_idx[T[train_idx] == 0]
+    treated_train_idx = train_idx[T[train_idx] == 1]
+
+    # Model 0: expected spending without a coupon
+    model0 = LinearRegression()
+    model0.fit(
+        X.iloc[control_train_idx],
+        Y[control_train_idx]
+    )
+
+    # Model 1: expected spending with a coupon
+    model1 = LinearRegression()
+    model1.fit(
+        X.iloc[treated_train_idx],
+        Y[treated_train_idx]
+    )
+
+    # Predict both conditions for all held-out customers
+    m0_hat[test_idx] = model0.predict(X.iloc[test_idx])
+    m1_hat[test_idx] = model1.predict(X.iloc[test_idx])
+
+assert np.isfinite(m0_hat).all()
+assert np.isfinite(m1_hat).all()
+
+# Average the predicted differences across all 10,000 customers
+ate_or = (m1_hat - m0_hat).mean()
+
+# Inspect the predictions
+outcome_predictions = df.copy()
+outcome_predictions['predicted_no_coupon'] = m0_hat
+outcome_predictions['predicted_coupon'] = m1_hat
+outcome_predictions['predicted_difference'] = m1_hat - m0_hat
+
+display(outcome_predictions.head(10))
+print(f'Outcome regression ATE estimate: ${ate_or:.2f}')
+```
+
+#### What this estimate depends on
+
+Outcome regression adjusts for differences in historical spending and engagement by predicting both outcomes for the same population.
+
+However, its validity depends on the outcome models adequately capturing the relevant relationships, alongside the causal assumptions introduced above. Cross-fitting helps limit overfitting, but it does not fix missing confounders, an incorrect model specification, or insufficient overlap.
+
+Before interpreting the estimate, we therefore need to assess the models’ held-out prediction performance and whether each treatment group provides adequate support for predictions across the target population.
+
 ### References for matching and diagnostics
 
 - [MatchIt: Assessing Balance](https://kosukeimai.github.io/MatchIt/articles/assessing-balance.html)
