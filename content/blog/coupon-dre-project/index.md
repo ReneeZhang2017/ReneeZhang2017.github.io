@@ -811,59 +811,29 @@ After training, we use both models to estimate two expected outcomes for each cu
 
 We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called **outcome regression**.
 
-#### Train two outcome regression models
+#### 1. Train two outcome regression models
 
-One way to implement outcome regression is to fit a separate model for each treatment group:
+We fit a separate linear regression model for each treatment group:
 
 | Model | Training data | Inputs | Target |
 |---|---|---|---|
 | **Model 0: No coupon** | Customers who did not receive a coupon | Historical spending and pre-treatment engagement | Subsequent spending |
 | **Model 1: Coupon** | Customers who received a coupon | Historical spending and pre-treatment engagement | Subsequent spending |
 
-Both models use only **pre-treatment characteristics** as inputs. Subsequent spending is the outcome we want to predict.
+Linear regression is suitable for this simulation because expected spending is linear in the two inputs within each treatment group. In real applications, model choice needs subject-matter knowledge and diagnostics.
 
-Here, we use **linear regression** for both models. This is suitable for our simulation because expected spending is a linear function of historical spending and engagement within each treatment group. In real applications, the relationship is unknown, so model choice should be supported by subject-matter knowledge and model diagnostics.
+We use **five-fold cross-fitting**:
 
-#### Predict both outcomes for every customer
+1. Split all 10,000 customers into five folds with similar coupon proportions.
+2. Hold out one fold and train both models on the other four folds, using non-recipients for Model 0 and recipients for Model 1.
+3. Use both models to predict spending for every held-out customer, regardless of their actual coupon assignment.
+4. Repeat until every customer has two held-out predictions.
 
-After training, we use **both models to predict spending for every customer**, regardless of whether they actually received a coupon.
+Each prediction comes from a model trained without that customer's data. Across five rounds, we fit five pairs of models. We also save a simple benchmark prediction: the mean spending of the corresponding treatment group in each training fold.
 
-For example, consider a customer who received a coupon:
+These predictions are estimates of expected spending given the observed characteristics, not the exact individual outcomes in an unobserved condition. At this stage, we save the predictions but do not calculate ATE.
 
-- Model 1 predicts their expected spending with a coupon.
-- Model 0 predicts their expected spending without a coupon—the counterfactual condition.
-
-For a customer who did not receive a coupon, Model 1 provides the prediction for the counterfactual condition instead.
-
-These are predictions of **expected spending given the observed characteristics**. They do not reveal exactly what an individual customer would have spent in the unobserved condition.
-
-#### Average the predicted differences
-
-Let **Xᵢ** represent customer i’s historical spending and pre-treatment engagement. Define:
-
-- **m̂₁(Xᵢ):** predicted expected spending with a coupon.
-- **m̂₀(Xᵢ):** predicted expected spending without a coupon.
-
-The outcome regression estimate is the average predicted difference:
-
-```text
-ATE_OR = (1 / N) × Σᵢ [m̂₁(Xᵢ) − m̂₀(Xᵢ)]
-```
-
-Here, **N = 10,000**. **Both predictions are averaged over the same full customer population**, which aligns the estimate with our ATE question.
-
-#### Generate predictions with cross-fitting
-
-If we train and predict on the same observations, the predictions can reflect overfitting. To keep each customer’s outcome out of the models used to predict for that customer, we use **five-fold cross-fitting**:
-
-1. Split the customers into five folds.
-2. Hold out one fold and train both outcome models using the other four folds, separating recipients and non-recipients within the training data.
-3. Use both models to predict for every customer in the held-out fold.
-4. Repeat until every customer has two predictions.
-
-Each customer is therefore predicted by models that did not use that customer’s data for training.
-
-#### Code
+##### Code
 
 ```python
 from sklearn.linear_model import LinearRegression
@@ -879,6 +849,8 @@ Y = df['subsequent_spending'].to_numpy()
 # Store held-out predictions in the original row order
 m0_hat = np.full(len(df), np.nan)
 m1_hat = np.full(len(df), np.nan)
+baseline_hat = np.full(len(df), np.nan)
+fold_id = np.zeros(len(df), dtype=int)
 
 # Stratification keeps treatment proportions similar across folds
 folds = StratifiedKFold(
@@ -887,7 +859,7 @@ folds = StratifiedKFold(
     random_state=42
 )
 
-for train_idx, test_idx in folds.split(X, T):
+for fold_number, (train_idx, test_idx) in enumerate(folds.split(X, T), start=1):
 
     # Separate the training customers by coupon assignment
     control_train_idx = train_idx[T[train_idx] == 0]
@@ -907,17 +879,140 @@ for train_idx, test_idx in folds.split(X, T):
         Y[treated_train_idx]
     )
 
+    # A simple benchmark: each training group's mean spending
+    fold_id[test_idx] = fold_number
+    baseline_hat[test_idx] = np.where(
+        T[test_idx] == 1,
+        Y[treated_train_idx].mean(),
+        Y[control_train_idx].mean()
+    )
+
     # Predict both conditions for all held-out customers
     m0_hat[test_idx] = model0.predict(X.iloc[test_idx])
     m1_hat[test_idx] = model1.predict(X.iloc[test_idx])
 
 assert np.isfinite(m0_hat).all()
 assert np.isfinite(m1_hat).all()
+```
 
-# Average the predicted differences across all 10,000 customers
+#### 2. Evaluate the outcome regression models
+
+Before calculating ATE, we examine whether the models make useful held-out predictions and whether predictions across treatment groups have data support.
+
+**Check observed-outcome prediction performance.** Each customer has two predictions, but only one can be directly compared with their actual spending:
+
+- For non-recipients, compare Model 0's prediction with actual spending.
+- For recipients, compare Model 1's prediction with actual spending.
+
+We assess each model separately using MAE, RMSE, and mean residual (actual minus predicted spending). We compare RMSE with the training-group mean benchmark, then inspect results across folds and engagement groups. Positive mean residuals indicate underprediction; negative values indicate overprediction. Average residuals can cancel, so the group-level checks matter.
+
+**Check support for counterfactual predictions.** Good prediction performance within a treatment group does not establish accuracy for the other group's counterfactual outcomes. We revisit the propensity-score overlap check from Step 4 and inspect counts in joint historical-spending and engagement ranges. Empty or sparse cells indicate potential problems with cross-group predictions. These coarse bins are a diagnostic starting point; counts in both groups do not prove adequate local overlap.
+
+##### Code
+
+```python
+# Evaluate only the prediction for each customer's observed condition
+factual_hat = np.where(T == 1, m1_hat, m0_hat)
+
+evaluation = df[features].copy()
+evaluation['fold'] = fold_id
+evaluation['coupon_assignment'] = T
+evaluation['actual_spending'] = Y
+evaluation['predicted_spending'] = factual_hat
+evaluation['residual'] = Y - factual_hat
+evaluation['squared_error'] = (Y - factual_hat) ** 2
+evaluation['absolute_error'] = np.abs(Y - factual_hat)
+evaluation['baseline_squared_error'] = (Y - baseline_hat) ** 2
+
+def summarize_errors(data, group_columns):
+    summary = data.groupby(group_columns, observed=True).agg(
+        Customers=('residual', 'size'),
+        MAE=('absolute_error', 'mean'),
+        MSE=('squared_error', 'mean'),
+        Mean_residual=('residual', 'mean'),
+        Baseline_MSE=('baseline_squared_error', 'mean')
+    )
+    summary['RMSE'] = np.sqrt(summary.pop('MSE'))
+    summary['Baseline_RMSE'] = np.sqrt(summary.pop('Baseline_MSE'))
+    return summary[
+        ['Customers', 'MAE', 'RMSE', 'Mean_residual', 'Baseline_RMSE']
+    ]
+
+# Overall results, separately for Model 0 and Model 1
+model_metrics = summarize_errors(evaluation, ['coupon_assignment'])
+display(model_metrics.round(3))
+
+# Check whether performance varies across folds
+fold_metrics = summarize_errors(evaluation, ['fold', 'coupon_assignment'])
+display(fold_metrics.round(3))
+
+# Check for systematic errors across engagement groups
+evaluation['activity_group'] = pd.cut(
+    evaluation['activity'],
+    bins=[-1, 3, 7, 10],
+    labels=['Low: 0-3', 'Medium: 4-7', 'High: 8-10']
+)
+segment_metrics = summarize_errors(
+    evaluation, ['activity_group', 'coupon_assignment']
+)
+display(segment_metrics.round(3))
+
+# Coarse support check: counts in joint pre-treatment feature ranges
+support_data = df[features + ['coupon_assignment']].copy()
+support_data['past_spend_range'] = pd.cut(
+    support_data['past_spend'],
+    bins=[0, 50, 100, 150, 200],
+    include_lowest=True
+)
+support_data['activity_group'] = evaluation['activity_group']
+
+support_counts = pd.crosstab(
+    [support_data['past_spend_range'], support_data['activity_group']],
+    support_data['coupon_assignment']
+).reindex(columns=[0, 1], fill_value=0)
+support_counts.columns = ['No coupon', 'Coupon']
+display(support_counts)
+```
+
+##### Output and interpretation
+
+| Model | Customers evaluated | MAE | RMSE | Mean residual | Benchmark RMSE |
+|---|---:|---:|---:|---:|---:|
+| Model 0: No coupon | 5,016 | 7.910 | 9.971 | 0.002 | 31.918 |
+| Model 1: Coupon | 4,984 | 8.187 | 10.230 | 0.001 | 35.232 |
+
+Both models improve substantially on the group-mean benchmark. Their RMSEs are close to the noise standard deviation of 10 specified in the simulation. Across the five folds, Model 0's RMSE ranges from approximately 9.78 to 10.22, and Model 1's from 9.95 to 10.47.
+
+The joint feature-range table contains both treatment groups in every checked cell, although the highest spending and engagement cell has only 88 non-recipients versus 559 recipients. Together with the earlier propensity-score diagnostics, this provides support for proceeding in this simulation while highlighting thinner control coverage among these customers. It does not directly validate the counterfactual predictions.
+
+##### How to decide whether to continue
+
+There is no universal MAE or RMSE cutoff that makes a model suitable for causal estimation. Consider the error scale, improvement over the benchmark, systematic residual patterns, and sample support together.
+
+- If errors are large or systematic, investigate data quality, feature choice, and model specification before proceeding.
+- If support is weak, reconsider whether the full-population ATE is estimable with adequate credibility. Restricting the population changes the estimand and must be stated explicitly.
+- If the diagnostics support continuing, use the saved held-out predictions in Part 3.
+
+Even favorable diagnostics cannot verify the missing counterfactual outcomes or prove that no unmeasured confounding remains. If model choices are repeatedly tuned using these held-out results, use an appropriate nested or separate validation design for an honest final assessment.
+
+#### 3. Estimate ATE
+
+After reviewing the diagnostics, we use the saved predictions to estimate ATE. There is no need to retrain on all customers: five-fold cross-fitting has already produced two held-out predictions for every customer.
+
+Let **m̂₁(Xᵢ)** denote predicted expected spending with a coupon and **m̂₀(Xᵢ)** predicted expected spending without a coupon. We calculate:
+
+```text
+ATE_OR = (1 / N) × Σᵢ [m̂₁(Xᵢ) − m̂₀(Xᵢ)]
+```
+
+Here, **N = 10,000**. Both predictions are averaged over the same full customer population. This implementation uses two predicted values for each customer; actual spending was used to train and evaluate the models.
+
+##### Code
+
+```python
+# Run after reviewing the diagnostics above
 ate_or = (m1_hat - m0_hat).mean()
 
-# Inspect the predictions
 outcome_predictions = df.copy()
 outcome_predictions['predicted_no_coupon'] = m0_hat
 outcome_predictions['predicted_coupon'] = m1_hat
@@ -927,13 +1022,15 @@ display(outcome_predictions.head(10))
 print(f'Outcome regression ATE estimate: ${ate_or:.2f}')
 ```
 
-#### What this estimate depends on
+##### Output
 
-Outcome regression adjusts for differences in historical spending and engagement by predicting both outcomes for the same population.
+```text
+Outcome regression ATE estimate: $20.40
+```
 
-However, its validity depends on the outcome models adequately capturing the relevant relationships, alongside the causal assumptions introduced above. Cross-fitting helps limit overfitting, but it does not fix missing confounders, an incorrect model specification, or insufficient overlap.
+The estimate is close to the true sample ATE of $20.07 from Step 3. The true effect is available only because this dataset is simulated; it is used for evaluation, not for training or choosing the models.
 
-Before interpreting the estimate, we therefore need to assess the models’ held-out prediction performance and whether each treatment group provides adequate support for predictions across the target population.
+The estimate depends on adequately specified outcome models and the causal assumptions discussed above. Cross-fitting keeps each customer's data out of their prediction models; it does not fix model misspecification, missing confounders, or inadequate overlap.
 
 ### References for matching and diagnostics
 
