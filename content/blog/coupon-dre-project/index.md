@@ -823,58 +823,78 @@ We use **five-fold cross-fitting** to generate held-out predictions for every cu
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import StratifiedKFold
 
-# Return to the full dataset, rather than the matched sample
+# Use the full dataset, rather than the matched sample
 features = ['past_spend', 'activity']
 
 X = df[features]
 T = df['coupon_assignment'].to_numpy()
 Y = df['subsequent_spending'].to_numpy()
 
-# Store held-out predictions in the original row order
+# Create one array per prediction type, with one entry per customer.
+# Initialize predictions with NaN, then fill them in during cross-fitting.
+# Keep all results in the same row order as df.
+
+# Predicted spending without a coupon
 m0_hat = np.full(len(df), np.nan)
+
+# Predicted spending with a coupon
 m1_hat = np.full(len(df), np.nan)
+
+# Benchmark prediction: the training mean for the customer's actual
+# treatment group (coupon or no coupon)
 baseline_hat = np.full(len(df), np.nan)
+
+# Record which fold each customer belongs to when held out for prediction.
+# Initialize with 0; replace with a fold number from 1 to 5.
 fold_id = np.zeros(len(df), dtype=int)
 
-# Stratification keeps treatment proportions similar across folds
+# Split customers into five folds with similar coupon proportions
 folds = StratifiedKFold(
     n_splits=5,
     shuffle=True,
     random_state=42
 )
 
+# In each round, train on four folds and predict for the held-out fold
 for fold_number, (train_idx, test_idx) in enumerate(folds.split(X, T), start=1):
 
     # Separate the training customers by coupon assignment
     control_train_idx = train_idx[T[train_idx] == 0]
     treated_train_idx = train_idx[T[train_idx] == 1]
 
-    # Model 0: expected spending without a coupon
+    # Train Model 0 on customers who did not receive a coupon
     model0 = LinearRegression()
     model0.fit(
         X.iloc[control_train_idx],
         Y[control_train_idx]
     )
 
-    # Model 1: expected spending with a coupon
+    # Train Model 1 on customers who received a coupon
     model1 = LinearRegression()
     model1.fit(
         X.iloc[treated_train_idx],
         Y[treated_train_idx]
     )
 
-    # A simple benchmark: each training group's mean spending
+    # Record the fold number for the held-out customers
     fold_id[test_idx] = fold_number
+
+    # Assign each held-out customer a benchmark prediction:
+    # the mean spending of training customers with the same coupon status.
+    # Use training data only when calculating these means.
     baseline_hat[test_idx] = np.where(
         T[test_idx] == 1,
         Y[treated_train_idx].mean(),
         Y[control_train_idx].mean()
     )
 
-    # Predict both conditions for all held-out customers
+    # Predict both conditions for every held-out customer.
+    # Store predictions at their original row positions.
     m0_hat[test_idx] = model0.predict(X.iloc[test_idx])
     m1_hat[test_idx] = model1.predict(X.iloc[test_idx])
 
+# Check that every customer has a finite prediction under both conditions.
+# These checks detect missing or infinite values, not prediction accuracy.
 assert np.isfinite(m0_hat).all()
 assert np.isfinite(m1_hat).all()
 ```
