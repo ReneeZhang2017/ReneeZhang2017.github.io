@@ -897,7 +897,35 @@ for fold_number, (train_idx, test_idx) in enumerate(folds.split(X, T), start=1):
 # These checks detect missing or infinite values, not prediction accuracy.
 assert np.isfinite(m0_hat).all()
 assert np.isfinite(m1_hat).all()
+
+# Display predictions for the first 10 customers
+training_output = df.copy()
+training_output['fold'] = fold_id
+training_output['predicted_no_coupon'] = m0_hat
+training_output['predicted_coupon'] = m1_hat
+training_output['baseline_prediction'] = baseline_hat
+
+display(training_output.head(10))
 ```
+
+##### Output
+
+First 10 customers; values below are rounded to three decimal places for readability.
+
+| Row | past_spend | activity | coupon_assignment | subsequent_spending | fold | predicted_no_coupon | predicted_coupon | baseline_prediction |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 154.791 | 0 | 0 | 87.185 | 3 | 97.504 | 107.908 | 83.399 |
+| 1 | 87.776 | 7 | 1 | 116.848 | 4 | 98.809 | 123.088 | 128.47 |
+| 2 | 171.72 | 2 | 1 | 135.199 | 3 | 115.895 | 130.228 | 128.41 |
+| 3 | 139.474 | 7 | 0 | 124.498 | 4 | 124.772 | 148.848 | 83.242 |
+| 4 | 18.835 | 6 | 0 | 54.646 | 3 | 59.539 | 81.767 | 83.399 |
+| 5 | 195.124 | 2 | 1 | 132.532 | 3 | 127.568 | 141.897 | 128.41 |
+| 6 | 152.228 | 5 | 1 | 130.982 | 4 | 121.257 | 141.438 | 128.47 |
+| 7 | 157.213 | 0 | 1 | 107.289 | 3 | 98.712 | 109.115 | 128.41 |
+| 8 | 25.623 | 7 | 0 | 88.069 | 5 | 67.517 | 92.263 | 83.373 |
+| 9 | 90.077 | 3 | 0 | 85.696 | 2 | 80.088 | 96.461 | 83.656 |
+
+Each row contains two held-out predictions for the same customer. The baseline prediction uses the training mean for that customer's actual coupon group. These are predictions to inspect; model performance is evaluated in the next section.
 
 #### 2. Evaluate the outcome regression models
 
