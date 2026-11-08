@@ -813,25 +813,9 @@ We then calculate the difference between these predictions and average the diffe
 
 #### 1. Train two outcome regression models
 
-We fit a separate linear regression model for each treatment group:
+We use linear regression for both Model 0 and Model 1. Linear regression is suitable for this simulation because expected spending is linear in the two inputs within each treatment group. In real applications, model choice needs subject-matter knowledge and diagnostics.
 
-| Model | Training data | Inputs | Target |
-|---|---|---|---|
-| **Model 0: No coupon** | Customers who did not receive a coupon | Historical spending and pre-treatment engagement | Subsequent spending |
-| **Model 1: Coupon** | Customers who received a coupon | Historical spending and pre-treatment engagement | Subsequent spending |
-
-Linear regression is suitable for this simulation because expected spending is linear in the two inputs within each treatment group. In real applications, model choice needs subject-matter knowledge and diagnostics.
-
-We use **five-fold cross-fitting**:
-
-1. Split all 10,000 customers into five folds with similar coupon proportions.
-2. Hold out one fold and train both models on the other four folds, using non-recipients for Model 0 and recipients for Model 1.
-3. Use both models to predict spending for every held-out customer, regardless of their actual coupon assignment.
-4. Repeat until every customer has two held-out predictions.
-
-Each prediction comes from a model trained without that customer's data. Across five rounds, we fit five pairs of models. We also save a simple benchmark prediction: the mean spending of the corresponding treatment group in each training fold.
-
-These predictions are estimates of expected spending given the observed characteristics, not the exact individual outcomes in an unobserved condition. At this stage, we save the predictions but do not calculate ATE.
+We use **five-fold cross-fitting** to generate held-out predictions for every customer. Each customer’s predictions come from models trained on the other four folds, without using that customer’s data. In the next step, we use these predictions and the observed outcomes to evaluate model performance.
 
 ##### Code
 
