@@ -797,14 +797,19 @@ All three approaches rely on causal assumptions, including adequate overlap and 
 
 ### 5.1 Estimate ATE with Outcome Regression
 
-We use two models to predict customer spending: one predicts expected spending **without a coupon**, and the other predicts expected spending **with a coupon**. Both models use historical spending and pre-treatment engagement as inputs.
+We use two models to predict customer spending:
+
+- Model 0 predicts expected spending without a coupon.
+- Model 1 predicts expected spending with a coupon.
+
+Both models use historical spending and pre-treatment engagement as inputs.
 
 The idea is to estimate two expected outcomes for each customer:
 
-- How much would this customer be expected to spend **with a coupon**?
-- How much would this customer be expected to spend **without a coupon**?
+- How much would this customer be expected to spend with a coupon?
+- How much would this customer be expected to spend without a coupon?
 
-We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called **outcome regression**.
+We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called outcome regression.
 
 #### Train two outcome models
 
