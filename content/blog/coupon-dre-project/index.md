@@ -811,7 +811,7 @@ After training, we use both models to estimate two expected outcomes for each cu
 
 We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called **outcome regression**.
 
-#### Train two outcome models
+#### Train two outcome regression models
 
 One way to implement outcome regression is to fit a separate model for each treatment group:
 
