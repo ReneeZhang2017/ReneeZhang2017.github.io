@@ -799,17 +799,17 @@ All three approaches rely on causal assumptions, including adequate overlap and 
 
 We use two models to predict customer spending:
 
-- Model 0 predicts expected spending without a coupon.
-- Model 1 predicts expected spending with a coupon.
+- **Model 0** predicts expected spending without a coupon. It is trained on data from customers who did not receive a coupon.
+- **Model 1** predicts expected spending with a coupon. It is trained on data from customers who received a coupon.
 
 Both models use historical spending and pre-treatment engagement as inputs.
 
-The idea is to estimate two expected outcomes for each customer:
+After training, we use both models to estimate two expected outcomes for each customer, regardless of whether they actually received a coupon:
 
 - How much would this customer be expected to spend with a coupon?
 - How much would this customer be expected to spend without a coupon?
 
-We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called outcome regression.
+We then calculate the difference between these predictions and average the differences across all 10,000 customers. This approach is called **outcome regression**.
 
 #### Train two outcome models
 
