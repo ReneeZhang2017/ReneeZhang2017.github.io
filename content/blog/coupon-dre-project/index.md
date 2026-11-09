@@ -929,7 +929,14 @@ Each row contains two held-out predictions for the same customer. The baseline p
 
 #### 2. Evaluate the outcome regression models
 
-Before calculating ATE, we examine whether the models make useful held-out predictions and whether predictions across treatment groups have data support.
+This section asks: **Do the two models’ predictions provide enough support to proceed with estimating ATE?**
+
+We perform two types of checks:
+
+| Check | Question |
+|---|---|
+| **Prediction performance** | How well do the models predict the spending we actually observe? |
+| **Overlap / Data support** | When predicting spending under the alternative treatment condition, are there similar customers in the relevant model’s training data? |
 
 **Check observed-outcome prediction performance.** Each customer has two predictions, but only one can be directly compared with their actual spending:
 
